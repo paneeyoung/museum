@@ -1,7 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
-import { copyShiftsToWeek, type CopyToWeekState } from './actions'
+import { useActionState, useState } from 'react'
+import { copyShiftsToWeek, type CopyMode, type CopyToWeekState } from './actions'
 import WeekMultiSelect from './WeekMultiSelect'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 
@@ -18,9 +18,18 @@ export default function CopyToWeekForm({
 }) {
   const boundAction = copyShiftsToWeek.bind(null, weekStartDate)
   const [state, formAction, pending] = useActionState(boundAction, initialState)
+  const [mode, setMode] = useState<CopyMode>('merge')
 
   return (
-    <form action={formAction} className="flex flex-col items-start gap-2">
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        if (mode === 'overwrite' && !window.confirm(dict.shifts.copyModeOverwriteConfirm)) {
+          e.preventDefault()
+        }
+      }}
+      className="flex flex-col items-start gap-2"
+    >
       <span className="text-xs text-gray-500">{dict.shifts.copyToWeekLabel}</span>
 
       <div className="flex items-center gap-2">
@@ -33,6 +42,30 @@ export default function CopyToWeekForm({
           {dict.shifts.copyToWeekButton}
         </button>
       </div>
+
+      <fieldset className="flex flex-col gap-1">
+        <legend className="text-xs text-gray-500">{dict.shifts.copyModeLabel}</legend>
+        <label className="flex items-center gap-1.5 text-sm text-gray-700">
+          <input
+            type="radio"
+            name="copyMode"
+            value="merge"
+            checked={mode === 'merge'}
+            onChange={() => setMode('merge')}
+          />
+          {dict.shifts.copyModeMerge}
+        </label>
+        <label className="flex items-center gap-1.5 text-sm text-gray-700">
+          <input
+            type="radio"
+            name="copyMode"
+            value="overwrite"
+            checked={mode === 'overwrite'}
+            onChange={() => setMode('overwrite')}
+          />
+          {dict.shifts.copyModeOverwrite}
+        </label>
+      </fieldset>
 
       {state.status === 'error' && state.errorCode && (
         <p className="text-sm text-red-600">{dict.shifts[state.errorCode]}</p>

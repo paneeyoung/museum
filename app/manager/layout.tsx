@@ -3,6 +3,7 @@ import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import ManagerTopbar from '@/app/components/ManagerTopbar'
+import { ToastProvider } from '@/app/components/Toast'
 
 export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
   const employee = await getCurrentEmployee()
@@ -13,9 +14,11 @@ export default async function ManagerLayout({ children }: { children: React.Reac
   const dict = getDictionary(locale)
 
   return (
-    <div>
-      <ManagerTopbar dict={dict} locale={locale} />
-      {children}
-    </div>
+    <ToastProvider>
+      <div>
+        <ManagerTopbar dict={dict} locale={locale} />
+        {children}
+      </div>
+    </ToastProvider>
   )
 }

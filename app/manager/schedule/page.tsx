@@ -20,9 +20,11 @@ import AutoPlanButton from './AutoPlanButton'
 import AssignmentSelect from './AssignmentSelect'
 import PublishControls from './PublishControls'
 import FunctionNameEditor from './FunctionNameEditor'
+import FunctionReorderButtons from '@/app/manager/functions/FunctionReorderButtons'
 import ShiftCellHeader from './ShiftCellHeader'
 import ShiftRowLabel from './ShiftRowLabel'
 import CopyToWeekForm from './CopyToWeekForm'
+import PrintButton from './PrintButton'
 
 const WEEKS_AHEAD_IN_PICKER = 12
 
@@ -38,6 +40,12 @@ const FUNCTION_CARD_STYLES = [
   'border-teal-200 bg-teal-50',
   'border-orange-200 bg-orange-50',
 ]
+
+function shiftDurationHours(startTime: string, endTime: string): number {
+  const [startHours, startMinutes] = startTime.split(':').map(Number)
+  const [endHours, endMinutes] = endTime.split(':').map(Number)
+  return (endHours * 60 + endMinutes - (startHours * 60 + startMinutes)) / 60
+}
 
 function cardStyleForFunction(functionId: string) {
   let hash = 0
@@ -87,14 +95,19 @@ export default async function ManagerSchedulePage({
   const prevWeekStartDate = toISODate(addWeeks(weekStart, -1))
 
   const supabase = await createClient()
-  const [{ data: shifts }, { data: functions }, { data: employees }, { data: roster }, { count: prevWeekShiftCount }] =
-    await Promise.all([
+  const [
+    { data: shifts },
+    { data: functions, error: functionsError },
+    { data: employees },
+    { data: roster },
+    { count: prevWeekShiftCount },
+  ] = await Promise.all([
       supabase
         .from('shifts_template')
         .select('id, day_of_week, start_time, end_time, shift_name, capacity, function_id')
         .eq('week_start_date', weekStartDate)
         .returns<ShiftRow[]>(),
-      supabase.from('functions').select('id, name').order('name'),
+      supabase.from('functions').select('id, name').order('sort_order'),
       supabase.from('employees').select('id, full_name').order('full_name'),
       supabase
         .from('roster')
@@ -107,6 +120,8 @@ export default async function ManagerSchedulePage({
         .eq('week_start_date', prevWeekStartDate),
     ])
 
+  if (functionsError) console.error('Failed to load functions for schedule grid:', functionsError)
+
   const { data: rosterShifts } = roster
     ? await supabase
         .from('roster_shifts')
@@ -117,6 +132,9 @@ export default async function ManagerSchedulePage({
     : { data: null }
 
   const functionNameById = new Map((functions ?? []).map((f) => [f.id, f.name]))
+  // functions was fetched already ordered by sort_order — array index is
+  // the manager-controlled display order (adjustable on /manager/functions).
+  const functionOrderById = new Map((functions ?? []).map((f, i) => [f.id, i]))
 
   const slotsByShift = new Map<string, RosterShiftRow[]>()
   for (const row of rosterShifts ?? []) {
@@ -149,11 +167,16 @@ export default async function ManagerSchedulePage({
     rowGroupsByFunction.set(group.functionId, list)
   }
   for (const list of rowGroupsByFunction.values()) {
-    list.sort((a, b) => a.shiftName.localeCompare(b.shiftName))
+    // `numeric` so "2" sorts before "10" instead of after — must stay in
+    // step with runAutoPlan's fill order, which sorts shift names the same
+    // way so it fills these rows top-to-bottom as displayed.
+    list.sort((a, b) => a.shiftName.localeCompare(b.shiftName, undefined, { numeric: true }))
   }
 
-  const functionIdsSorted = [...rowGroupsByFunction.keys()].sort((a, b) =>
-    (functionNameById.get(a) ?? '').localeCompare(functionNameById.get(b) ?? '')
+  const functionIdsSorted = [...rowGroupsByFunction.keys()].sort(
+    (a, b) =>
+      (functionOrderById.get(a) ?? Number.MAX_SAFE_INTEGER) -
+      (functionOrderById.get(b) ?? Number.MAX_SAFE_INTEGER)
   )
 
   const weekOptions = Array.from({ length: WEEKS_AHEAD_IN_PICKER }, (_, i) => {
@@ -168,7 +191,14 @@ export default async function ManagerSchedulePage({
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
-      <div>
+      {/* Shown only on the printed/exported page — the topbar (with the week
+          picker) is hidden there, so this is the only place a printout says
+          which week it's for. */}
+      <h1 className="hidden print:mb-4 print:block print:text-lg print:font-semibold print:text-gray-900">
+        {dict.schedule.printTitle} — {formatWeekRangeLabel(weekStart, locale)}
+      </h1>
+
+      <div className="print:hidden">
         <div className="mt-3">
           {hasFunctions ? (
             <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
@@ -204,13 +234,16 @@ export default async function ManagerSchedulePage({
         )}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
-        <AutoPlanButton
-          weekStartDate={weekStartDate}
-          hasExistingDraft={hasDraft}
-          disabled={isPublished}
-          dict={dict}
-        />
+      <div className="mt-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
+        <div className="flex flex-wrap items-start gap-3">
+          <AutoPlanButton
+            weekStartDate={weekStartDate}
+            hasExistingDraft={hasDraft}
+            disabled={isPublished}
+            dict={dict}
+          />
+          <PrintButton dict={dict} />
+        </div>
         {roster && <PublishControls rosterId={roster.id} isPublished={isPublished} dict={dict} />}
       </div>
 
@@ -227,8 +260,8 @@ export default async function ManagerSchedulePage({
         )}
 
         {(shifts ?? []).length > 0 && (
-          <div className="overflow-x-auto pb-2">
-            <table className="w-full min-w-[900px] table-fixed border-collapse text-xs">
+          <div className="overflow-x-auto pb-2 print:overflow-visible">
+            <table className="w-full min-w-[900px] table-fixed border-collapse text-xs print:min-w-0 print:text-[10px]">
               <colgroup>
                 <col style={{ width: '14%' }} />
                 {WEEK_DISPLAY_ORDER.map((dayOfWeek) => (
@@ -253,99 +286,138 @@ export default async function ManagerSchedulePage({
               <tbody>
                 {functionIdsSorted.map((functionId) => (
                   <Fragment key={functionId}>
-                    <tr>
+                    <tr className="break-inside-avoid">
                       <td
                         colSpan={WEEK_DISPLAY_ORDER.length + 1}
                         className="border border-gray-200 bg-gray-100 px-2 py-1.5"
                       >
-                        <FunctionNameEditor
-                          functionId={functionId}
-                          name={functionNameById.get(functionId) ?? '—'}
-                          dict={dict}
-                        />
+                        <div className="flex items-center gap-2">
+                          <FunctionReorderButtons
+                            functionId={functionId}
+                            // Disabled state (and the swap itself, via
+                            // moveFunction) is based on the full function
+                            // list's sort_order, not just the ones with a
+                            // shift this week — same underlying order as
+                            // the Functies page, so either page stays in
+                            // sync with the other.
+                            disableUp={functionOrderById.get(functionId) === 0}
+                            disableDown={functionOrderById.get(functionId) === (functions ?? []).length - 1}
+                            dict={dict}
+                          />
+                          <FunctionNameEditor
+                            functionId={functionId}
+                            name={functionNameById.get(functionId) ?? '—'}
+                            dict={dict}
+                          />
+                        </div>
                       </td>
                     </tr>
                     {rowGroupsByFunction.get(functionId)!.map((group) => {
                       const sampleShift = group.byDay.values().next().value as ShiftRow
-                      return Array.from({ length: group.maxCapacity }, (_, slotIndex) => (
-                        <tr key={`${functionId}-${group.shiftName}-${slotIndex}`}>
-                          <td className="border border-gray-200 bg-gray-50 p-2 align-top text-xs font-medium text-gray-700">
-                            <ShiftRowLabel
-                              shiftIds={[...group.byDay.values()].map((s) => s.id)}
-                              shiftName={group.shiftName}
-                              slotNumber={String(slotIndex + 1).padStart(2, '0')}
-                              dict={dict}
-                            />
-                          </td>
-                          {WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => {
-                            const shift = group.byDay.get(dayOfWeek)
-                            if (!shift) {
+                      return Array.from({ length: group.maxCapacity }, (_, slotIndex) => {
+                        const rowShifts = [...group.byDay.values()].filter(
+                          (s) => slotIndex < s.capacity
+                        )
+                        const shiftCount = rowShifts.length
+                        const totalHours = rowShifts.reduce(
+                          (sum, s) => sum + shiftDurationHours(s.start_time, s.end_time),
+                          0
+                        )
+                        return (
+                          <tr key={`${functionId}-${group.shiftName}-${slotIndex}`} className="break-inside-avoid">
+                            <td className="border border-gray-200 bg-gray-50 p-2 align-top text-xs font-medium text-gray-700">
+                              <ShiftRowLabel
+                                shiftIds={[...group.byDay.values()].map((s) => s.id)}
+                                shiftName={group.shiftName}
+                                slotNumber={group.maxCapacity > 1 ? String(slotIndex + 1).padStart(2, '0') : null}
+                                shiftCount={shiftCount}
+                                totalHours={totalHours}
+                                dict={dict}
+                              />
+                            </td>
+                            {WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => {
+                              const shift = group.byDay.get(dayOfWeek)
+                              if (!shift) {
+                                return (
+                                  <td
+                                    key={dayOfWeek}
+                                    className="border border-gray-200 bg-white p-1 text-center text-gray-300"
+                                  >
+                                    {slotIndex === 0 ? (
+                                      <AddShiftCell
+                                        weekStartDate={weekStartDate}
+                                        dayOfWeek={dayOfWeek}
+                                        dayLabel={`${dict.common.dayNames[dayOfWeek]} · ${formatDayLabel(addDays(weekStart, dayIndex), locale)}`}
+                                        functionId={group.functionId}
+                                        shiftName={group.shiftName}
+                                        defaultStartTime={sampleShift.start_time}
+                                        defaultEndTime={sampleShift.end_time}
+                                        defaultCapacity={sampleShift.capacity}
+                                        dict={dict}
+                                      />
+                                    ) : (
+                                      '—'
+                                    )}
+                                  </td>
+                                )
+                              }
+                              if (slotIndex >= shift.capacity) {
+                                return (
+                                  <td
+                                    key={dayOfWeek}
+                                    className="border border-gray-200 bg-white p-2 text-center text-gray-300"
+                                  >
+                                    —
+                                  </td>
+                                )
+                              }
+                              const slots = slotsByShift.get(shift.id) ?? []
+                              const slot = slots[slotIndex]
                               return (
                                 <td
                                   key={dayOfWeek}
-                                  className="border border-gray-200 bg-white p-1 text-center text-gray-300"
+                                  className={`border p-2 align-top ${cardStyleForFunction(shift.function_id)}`}
                                 >
-                                  {slotIndex === 0 ? (
-                                    <AddShiftCell
-                                      weekStartDate={weekStartDate}
-                                      dayOfWeek={dayOfWeek}
+                                  {slotIndex === 0 && (
+                                    <ShiftCellHeader
+                                      key={shift.id}
+                                      shiftId={shift.id}
+                                      shiftName={shift.shift_name}
+                                      startTime={shift.start_time}
+                                      endTime={shift.end_time}
+                                      capacity={shift.capacity}
                                       dayLabel={`${dict.common.dayNames[dayOfWeek]} · ${formatDayLabel(addDays(weekStart, dayIndex), locale)}`}
-                                      functionId={group.functionId}
-                                      shiftName={group.shiftName}
-                                      defaultStartTime={sampleShift.start_time}
-                                      defaultEndTime={sampleShift.end_time}
-                                      defaultCapacity={sampleShift.capacity}
                                       dict={dict}
                                     />
+                                  )}
+                                  {slot ? (
+                                    <AssignmentSelect
+                                      // Auto-plan deletes and reinserts every
+                                      // roster_shifts row for the week (see
+                                      // runAutoPlan), so slot.id changes even
+                                      // when this grid cell's position is
+                                      // unchanged. Without this key, React
+                                      // reuses the existing AssignmentSelect
+                                      // instance and its stale local `value`
+                                      // state instead of picking up the new
+                                      // employeeId — same reasoning as
+                                      // ShiftCellHeader's key={shift.id} above.
+                                      key={slot.id}
+                                      rosterShiftId={slot.id}
+                                      employeeId={slot.employee_id}
+                                      employees={employees ?? []}
+                                      dict={dict}
+                                      disabled={isPublished}
+                                    />
                                   ) : (
-                                    '—'
+                                    <span className="text-[11px] text-gray-400">—</span>
                                   )}
                                 </td>
                               )
-                            }
-                            if (slotIndex >= shift.capacity) {
-                              return (
-                                <td
-                                  key={dayOfWeek}
-                                  className="border border-gray-200 bg-white p-2 text-center text-gray-300"
-                                >
-                                  —
-                                </td>
-                              )
-                            }
-                            const slots = slotsByShift.get(shift.id) ?? []
-                            const slot = slots[slotIndex]
-                            return (
-                              <td
-                                key={dayOfWeek}
-                                className={`border p-2 align-top ${cardStyleForFunction(shift.function_id)}`}
-                              >
-                                {slotIndex === 0 && (
-                                  <ShiftCellHeader
-                                    key={shift.id}
-                                    shiftId={shift.id}
-                                    shiftName={shift.shift_name}
-                                    startTime={shift.start_time}
-                                    endTime={shift.end_time}
-                                    dict={dict}
-                                  />
-                                )}
-                                {slot ? (
-                                  <AssignmentSelect
-                                    rosterShiftId={slot.id}
-                                    employeeId={slot.employee_id}
-                                    employees={employees ?? []}
-                                    dict={dict}
-                                    disabled={isPublished}
-                                  />
-                                ) : (
-                                  <span className="text-[11px] text-gray-400">—</span>
-                                )}
-                              </td>
-                            )
-                          })}
-                        </tr>
-                      ))
+                            })}
+                          </tr>
+                        )
+                      })
                     })}
                   </Fragment>
                 ))}

@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  /* The schedule grid is wide (7 day columns) — landscape fits it without
+     shrinking text past readability. */
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  /* Independent of the OS/browser dark-mode preference used on screen —
+     paper has no dark mode. */
+  body {
+    background: #fff;
+    color: #000;
+  }
+}

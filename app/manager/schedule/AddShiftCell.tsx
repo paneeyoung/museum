@@ -46,7 +46,7 @@ export default function AddShiftCell({
         type="button"
         onClick={() => setOpen(true)}
         title={dict.schedule.addShiftHint}
-        className="flex h-full min-h-6 w-full items-center justify-center rounded text-gray-300 hover:bg-gray-100 hover:text-gray-500"
+        className="flex h-full min-h-11 w-full items-center justify-center rounded text-xl text-gray-300 hover:bg-gray-100 hover:text-gray-500 active:bg-gray-200 print:hidden"
       >
         +
       </button>
@@ -65,7 +65,7 @@ export default function AddShiftCell({
             <input type="hidden" name="dayOfWeek" value={dayOfWeek} />
             <input type="hidden" name="functionId" value={functionId} />
 
-            <p className="text-sm font-medium text-gray-900">{dayLabel}</p>
+            <p className="text-left text-sm font-medium text-gray-900">{dayLabel}</p>
 
             <div className="flex gap-3">
               <div className="flex flex-1 flex-col gap-1">

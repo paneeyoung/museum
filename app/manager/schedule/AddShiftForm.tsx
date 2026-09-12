@@ -5,6 +5,7 @@ import { addShift, type AddShiftState } from './actions'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import { WEEK_DISPLAY_ORDER } from '@/lib/weeks'
 import TimeSelect from '@/app/components/TimeSelect'
+import DayMultiSelect from './DayMultiSelect'
 
 const initialState: AddShiftState = { status: 'idle' }
 
@@ -36,21 +37,11 @@ export default function AddShiftForm({
 
       <div className="flex flex-col gap-1">
         <label className="text-xs text-gray-500">{dict.shifts.dayLabel}</label>
-        <select
+        <DayMultiSelect
           name="dayOfWeek"
-          required
-          defaultValue=""
-          className="rounded-md border border-gray-300 px-2 py-2 text-sm focus:border-black focus:outline-none"
-        >
-          <option value="" disabled>
-            —
-          </option>
-          {WEEK_DISPLAY_ORDER.map((dayOfWeek) => (
-            <option key={dayOfWeek} value={dayOfWeek}>
-              {dayNames[dayOfWeek]}
-            </option>
-          ))}
-        </select>
+          options={WEEK_DISPLAY_ORDER.map((dayOfWeek) => ({ value: dayOfWeek, label: dayNames[dayOfWeek] }))}
+          dict={dict}
+        />
       </div>
 
       <div className="flex flex-col gap-1">

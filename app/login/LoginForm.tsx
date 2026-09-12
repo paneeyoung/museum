@@ -6,7 +6,6 @@ import type { Dictionary } from '@/lib/i18n/dictionaries'
 
 export default function LoginForm({ dict }: { dict: Dictionary['login'] }) {
   const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -15,22 +14,22 @@ export default function LoginForm({ dict }: { dict: Dictionary['login'] }) {
     setStatus('sending')
     setErrorMessage('')
 
-    const trimmedName = name.trim()
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        // Only used the very first time this email signs in (that's when the
-        // employees row gets created) — omit entirely when blank so it
-        // doesn't overwrite anything with an empty string.
-        ...(trimmedName ? { data: { full_name: trimmedName } } : {}),
+        // Accounts are only ever created via the manager's invite flow now —
+        // never implicitly at login — so a pre-invited-only workforce can't
+        // end up with duplicate accounts from typos in self-entered emails.
+        shouldCreateUser: false,
       },
     })
 
     if (error) {
       setStatus('error')
-      setErrorMessage(error.message)
+      // GoTrue's code for "no existing user and shouldCreateUser is false".
+      setErrorMessage(error.code === 'otp_disabled' ? dict.errorNotInvited : error.message)
     } else {
       setStatus('sent')
     }
@@ -44,18 +43,12 @@ export default function LoginForm({ dict }: { dict: Dictionary['login'] }) {
       </div>
 
       {status === 'sent' ? (
-        <p className="rounded-md bg-green-50 p-4 text-sm text-green-700">
-          {dict.sentMessage.replace('{email}', email)}
-        </p>
+        <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
+          <p>{dict.sentMessage.replace('{email}', email)}</p>
+          <p className="mt-2 font-bold">{dict.spamNotice}</p>
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder={dict.namePlaceholder}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-          />
           <input
             type="email"
             required

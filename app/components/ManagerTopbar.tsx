@@ -108,7 +108,7 @@ export default function ManagerTopbar({ dict, locale }: { dict: Dictionary; loca
   const pathname = usePathname()
 
   return (
-    <header className="border-b border-gray-200 bg-white">
+    <header className="border-b border-gray-200 bg-white print:hidden">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2">
         <nav className="flex flex-wrap items-center gap-1">
           <Link href="/manager/schedule" className={pathname.startsWith('/manager/schedule') ? activeLinkClass : linkClass}>

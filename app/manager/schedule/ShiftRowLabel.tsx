@@ -8,11 +8,15 @@ export default function ShiftRowLabel({
   shiftIds,
   shiftName,
   slotNumber,
+  shiftCount,
+  totalHours,
   dict,
 }: {
   shiftIds: string[]
   shiftName: string
-  slotNumber: string
+  slotNumber: string | null
+  shiftCount: number
+  totalHours: number
   dict: Dictionary
 }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -60,14 +64,25 @@ export default function ShiftRowLabel({
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => setIsEditing(true)}
-      disabled={isPending}
-      title={dict.schedule.renameFunctionHint}
-      className="-mx-1 w-full rounded px-1 text-left disabled:opacity-50 hover:bg-black/5"
-    >
-      {value} {slotNumber}
-    </button>
+    <div>
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        disabled={isPending}
+        title={dict.schedule.renameFunctionHint}
+        className="-mx-1 w-full rounded px-1 text-left disabled:opacity-50 hover:bg-black/5"
+      >
+        {slotNumber ? `${value} ${slotNumber}` : value}
+      </button>
+      <p className="mt-0.5 px-1 text-[10px] font-normal text-gray-500">
+        {dict.schedule.rowStatsSummary
+          .replace('{count}', String(shiftCount))
+          .replace('{hours}', formatHours(totalHours))}
+      </p>
+    </div>
   )
+}
+
+function formatHours(hours: number): string {
+  return (Math.round(hours * 10) / 10).toString()
 }
