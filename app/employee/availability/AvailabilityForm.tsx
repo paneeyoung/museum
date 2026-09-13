@@ -182,72 +182,79 @@ export default function AvailabilityForm({
               key={day.dayOfWeek}
               className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between"
             >
-              <div className="flex items-center gap-2 sm:w-32">
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    title={dict.availability.copyToOtherDays}
-                    aria-label={dict.availability.copyToOtherDays}
-                    onClick={() => (copyMenuDay === day.dayOfWeek ? setCopyMenuDay(null) : openCopyMenu(day.dayOfWeek))}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-50"
-                  >
-                    <CopyIcon />
-                  </button>
+              <div className="flex items-center justify-between gap-2 sm:w-32 sm:justify-start">
+                <div className="flex items-center gap-2">
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      title={dict.availability.copyToOtherDays}
+                      aria-label={dict.availability.copyToOtherDays}
+                      onClick={() => (copyMenuDay === day.dayOfWeek ? setCopyMenuDay(null) : openCopyMenu(day.dayOfWeek))}
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-50"
+                    >
+                      <CopyIcon />
+                    </button>
 
-                  {copyMenuDay === day.dayOfWeek && (
-                    <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-lg">
-                      <p className="mb-2 text-gray-500">
-                        {dayNames[day.dayOfWeek]}:{' '}
-                        <span className="font-medium text-gray-700">
-                          {dayState === 'specific'
-                            ? `${startTimes[day.dayOfWeek]} ${dict.common.to} ${endTimes[day.dayOfWeek]}`
-                            : stateLabels[dayState]}
-                        </span>
-                      </p>
-                      <p className="mb-2 font-medium text-gray-700">{dict.availability.copySelectDaysLabel}</p>
-                      <div className="space-y-1">
-                        {days
-                          .filter((d) => d.dayOfWeek !== day.dayOfWeek)
-                          .map((d) => (
-                            <label key={d.dayOfWeek} className="flex items-center gap-2 text-gray-700">
-                              <input
-                                type="checkbox"
-                                checked={copyTargets.has(d.dayOfWeek)}
-                                onChange={() => toggleCopyTarget(d.dayOfWeek)}
-                              />
-                              {dayNames[d.dayOfWeek]}
-                            </label>
-                          ))}
+                    {copyMenuDay === day.dayOfWeek && (
+                      <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-lg">
+                        <p className="mb-2 text-gray-500">
+                          {dayNames[day.dayOfWeek]}:{' '}
+                          <span className="font-medium text-gray-700">
+                            {dayState === 'specific'
+                              ? `${startTimes[day.dayOfWeek]} ${dict.common.to} ${endTimes[day.dayOfWeek]}`
+                              : stateLabels[dayState]}
+                          </span>
+                        </p>
+                        <p className="mb-2 font-medium text-gray-700">{dict.availability.copySelectDaysLabel}</p>
+                        <div className="space-y-1">
+                          {days
+                            .filter((d) => d.dayOfWeek !== day.dayOfWeek)
+                            .map((d) => (
+                              <label key={d.dayOfWeek} className="flex items-center gap-2 text-gray-700">
+                                <input
+                                  type="checkbox"
+                                  checked={copyTargets.has(d.dayOfWeek)}
+                                  onChange={() => toggleCopyTarget(d.dayOfWeek)}
+                                />
+                                {dayNames[d.dayOfWeek]}
+                              </label>
+                            ))}
+                        </div>
+                        <div className="mt-3 flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCopyMenuDay(null)}
+                            className="rounded-md px-2 py-1 text-gray-600 hover:bg-gray-50"
+                          >
+                            {dict.availability.copyCancel}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={applyCopy}
+                            disabled={copyTargets.size === 0}
+                            className="rounded-md bg-black px-3 py-1 text-white disabled:opacity-40"
+                          >
+                            {dict.availability.copyApply}
+                          </button>
+                        </div>
                       </div>
-                      <div className="mt-3 flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setCopyMenuDay(null)}
-                          className="rounded-md px-2 py-1 text-gray-600 hover:bg-gray-50"
-                        >
-                          {dict.availability.copyCancel}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={applyCopy}
-                          disabled={copyTargets.size === 0}
-                          className="rounded-md bg-black px-3 py-1 text-white disabled:opacity-40"
-                        >
-                          {dict.availability.copyApply}
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-gray-900">{dayNames[day.dayOfWeek]}</p>
+                    <p className="text-xs text-gray-500">{day.dateLabel}</p>
+                  </div>
                 </div>
 
-                <div>
-                  <p className="font-medium text-gray-900">{dayNames[day.dayOfWeek]}</p>
-                  <p className="text-xs text-gray-500">{day.dateLabel}</p>
-                </div>
-              </div>
-
-              <div className="flex flex-1 flex-wrap items-center gap-3">
-                <div role="group" aria-label={dict.availability.availableLabel} className="flex items-center gap-2">
+                {/* Mobile only: available/unavailable sits right next to the day
+                    name, on the same row, so a right-handed reader can scan the
+                    day on the left and tap straight across on the right without
+                    hunting for the buttons on a row below. At sm+ this is hidden
+                    in favor of the identical pair further right (see below),
+                    which keeps every row's controls aligned at the same x
+                    position regardless of how long each day's name is. */}
+                <div role="group" aria-label={dict.availability.availableLabel} className="flex items-center gap-2 sm:hidden">
                   <button
                     type="button"
                     aria-pressed={available}
@@ -276,8 +283,43 @@ export default function AvailabilityForm({
                   >
                     <XIcon />
                   </button>
+                </div>
+              </div>
 
-                  <input type="hidden" name={`available-${day.dayOfWeek}`} value={dayState} readOnly />
+              <input type="hidden" name={`available-${day.dayOfWeek}`} value={dayState} readOnly />
+
+              <div className="flex flex-1 flex-wrap items-center gap-3">
+                {/* Desktop (sm+) version of the same available/unavailable pair —
+                    see the comment on the mobile version above. */}
+                <div role="group" aria-label={dict.availability.availableLabel} className="hidden items-center gap-2 sm:flex">
+                  <button
+                    type="button"
+                    aria-pressed={available}
+                    title={dict.availability.availableLabel}
+                    onClick={() => setAvailable(day.dayOfWeek, true)}
+                    className={[
+                      'flex h-9 w-9 items-center justify-center rounded-full border transition-colors',
+                      available
+                        ? 'border-green-600 bg-green-600 text-white'
+                        : 'border-gray-300 text-gray-400 hover:border-green-400 hover:text-green-600',
+                    ].join(' ')}
+                  >
+                    <CheckIcon />
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={!available}
+                    title={dict.availability.unavailable}
+                    onClick={() => setAvailable(day.dayOfWeek, false)}
+                    className={[
+                      'flex h-9 w-9 items-center justify-center rounded-full border transition-colors',
+                      !available
+                        ? 'border-red-600 bg-red-600 text-white'
+                        : 'border-gray-300 text-gray-400 hover:border-red-400 hover:text-red-600',
+                    ].join(' ')}
+                  >
+                    <XIcon />
+                  </button>
                 </div>
 
                 {available && (
