@@ -179,8 +179,15 @@ export default async function ManagerSchedulePage({
       (functionOrderById.get(b) ?? Number.MAX_SAFE_INTEGER)
   )
 
+  // The picker always shows WEEKS_AHEAD_IN_PICKER weeks starting from
+  // whichever is earlier: the real "next week" or the week currently being
+  // viewed. This keeps the currently viewed week inside the window (so it
+  // always has room to show weeks after it) even when the manager has
+  // navigated far into the future or past, instead of always anchoring to
+  // real-world "today" and running out of future options.
+  const weekOptionsWindowStart = weekStart < nextWeekStart() ? weekStart : nextWeekStart()
   const weekOptions = Array.from({ length: WEEKS_AHEAD_IN_PICKER }, (_, i) => {
-    const start = addWeeks(nextWeekStart(), i)
+    const start = addWeeks(weekOptionsWindowStart, i)
     return { value: toISODate(start), label: formatWeekRangeLabel(start, locale) }
   })
 

@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthRoute = pathname === '/login' || pathname.startsWith('/auth/')
-  const isProtected = !isAuthRoute && pathname !== '/'
+  const isProtected = !isAuthRoute
 
   if (!user && isProtected) {
     return NextResponse.redirect(new URL('/login', request.url))
