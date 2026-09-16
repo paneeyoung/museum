@@ -52,9 +52,10 @@ export default function AddShiftForm({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
+        aria-label={dict.shifts.addButton}
         className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white md:hidden"
       >
-        + {dict.shifts.addButton}
+        + {dict.shifts.addButtonMobile}
       </button>
 
       <div

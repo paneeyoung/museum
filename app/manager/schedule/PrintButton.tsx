@@ -24,10 +24,11 @@ export default function PrintButton({ dict }: { dict: Dictionary }) {
     <button
       type="button"
       onClick={() => window.print()}
-      className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      aria-label={dict.schedule.printButton}
+      className="flex items-center justify-center gap-2 rounded-md border border-gray-300 p-2 text-sm font-medium text-gray-700 hover:bg-gray-50 md:px-4 md:py-2"
     >
       <PrinterIcon />
-      {dict.schedule.printButton}
+      <span className="hidden md:inline">{dict.schedule.printButton}</span>
     </button>
   )
 }

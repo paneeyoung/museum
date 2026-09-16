@@ -206,15 +206,33 @@ export default async function ManagerSchedulePage({
       </h1>
 
       <div className="print:hidden">
-        <div className="mt-3">
-          {hasFunctions ? (
-            <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
-          ) : (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              <p>{dict.shifts.noFunctionsWarning}</p>
-              <Link href="/manager/functions" className="mt-2 inline-block font-medium underline">
-                {dict.shifts.goToFunctions}
-              </Link>
+        {/* Below md, AddShiftForm/CopyToWeekForm render only their trigger
+            button (their full forms are md:hidden), so this flex row just
+            sits the two buttons side by side. At md+, `md:contents` makes
+            this wrapper disappear from the box model entirely — the two
+            child divs become direct children of the div above exactly as
+            before, stacking full-width with their own md:mt-* spacing. */}
+        <div className="mt-3 flex flex-wrap items-center gap-3 md:contents">
+          <div className="md:mt-3">
+            {hasFunctions ? (
+              <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <p>{dict.shifts.noFunctionsWarning}</p>
+                <Link href="/manager/functions" className="mt-2 inline-block font-medium underline">
+                  {dict.shifts.goToFunctions}
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {(shifts ?? []).length > 0 && (
+            <div className="md:mt-4">
+              <CopyToWeekForm
+                weekStartDate={weekStartDate}
+                weekOptions={weekOptions.filter((w) => w.value !== weekStartDate)}
+                dict={dict}
+              />
             </div>
           )}
         </div>
@@ -228,16 +246,6 @@ export default async function ManagerSchedulePage({
               {dict.shifts.copyPreviousWeek}
             </button>
           </form>
-        )}
-
-        {(shifts ?? []).length > 0 && (
-          <div className="mt-4">
-            <CopyToWeekForm
-              weekStartDate={weekStartDate}
-              weekOptions={weekOptions.filter((w) => w.value !== weekStartDate)}
-              dict={dict}
-            />
-          </div>
         )}
       </div>
 
