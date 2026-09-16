@@ -52,6 +52,78 @@ function CopyIcon() {
   )
 }
 
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-gray-400">
+      <path
+        fillRule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  )
+}
+
+// A day is "all day" by default, so most rows never need the hours type
+// touched — tucking it behind this small dropdown (instead of an
+// always-visible "Hele dag / Specifieke tijd" toggle bar on every row) keeps
+// the common case compact, and lets it sit directly beside the
+// available/unavailable buttons on mobile instead of spilling onto its own
+// row. The time pickers only appear once "Specifieke tijd" is actually
+// chosen.
+function HoursTypeMenu({
+  dict,
+  dayState,
+  isOpen,
+  onToggle,
+  onSelect,
+  className = '',
+}: {
+  dict: Dictionary
+  dayState: AvailabilityDayState
+  isOpen: boolean
+  onToggle: () => void
+  onSelect: (hoursType: 'allDay' | 'specific') => void
+  className?: string
+}) {
+  const label = dayState === 'specific' ? dict.availability.specificOption : dict.availability.allDayOption
+  return (
+    <div className={`relative shrink-0 ${className}`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+      >
+        {label}
+        <ChevronDownIcon />
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-md border border-gray-200 bg-white p-1 text-sm shadow-lg">
+          <button
+            type="button"
+            onClick={() => onSelect('allDay')}
+            className={`block w-full rounded px-3 py-2 text-left hover:bg-gray-50 ${
+              dayState !== 'specific' ? 'font-medium text-gray-900' : 'text-gray-700'
+            }`}
+          >
+            {dict.availability.allDayOption}
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelect('specific')}
+            className={`block w-full rounded px-3 py-2 text-left hover:bg-gray-50 ${
+              dayState === 'specific' ? 'font-medium text-gray-900' : 'text-gray-700'
+            }`}
+          >
+            {dict.availability.specificOption}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AvailabilityForm({
   weekStartDate,
   days,
@@ -69,6 +141,7 @@ export default function AvailabilityForm({
   const [endTimes, setEndTimes] = useState<string[]>(days.map((d) => d.endTime))
   const [copyMenuDay, setCopyMenuDay] = useState<number | null>(null)
   const [copyTargets, setCopyTargets] = useState<Set<number>>(new Set())
+  const [hoursMenuDay, setHoursMenuDay] = useState<number | null>(null)
   const dayNames = dict.common.dayNames
   const stateLabels: Record<AvailabilityDayState, string> = {
     unavailable: dict.availability.unavailable,
@@ -141,6 +214,11 @@ export default function AvailabilityForm({
         return next
       })
     }
+  }
+
+  function selectHoursType(day: number, hoursType: 'allDay' | 'specific') {
+    setHoursType(day, hoursType)
+    setHoursMenuDay(null)
   }
 
   function openCopyMenu(day: number) {
@@ -283,6 +361,15 @@ export default function AvailabilityForm({
                   >
                     <XIcon />
                   </button>
+                  {available && (
+                    <HoursTypeMenu
+                      dict={dict}
+                      dayState={dayState}
+                      isOpen={hoursMenuDay === day.dayOfWeek}
+                      onToggle={() => setHoursMenuDay(hoursMenuDay === day.dayOfWeek ? null : day.dayOfWeek)}
+                      onSelect={(hoursType) => selectHoursType(day.dayOfWeek, hoursType)}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -323,38 +410,14 @@ export default function AvailabilityForm({
                 </div>
 
                 {available && (
-                  <div
-                    role="group"
-                    aria-label={dict.availability.hoursType}
-                    className="flex overflow-hidden rounded-md border border-gray-300 text-sm"
-                  >
-                    <button
-                      type="button"
-                      aria-pressed={dayState !== 'specific'}
-                      onClick={() => setHoursType(day.dayOfWeek, 'allDay')}
-                      className={[
-                        'px-3 py-2 transition-colors',
-                        dayState !== 'specific'
-                          ? 'bg-black text-white'
-                          : 'text-gray-700 hover:bg-gray-50',
-                      ].join(' ')}
-                    >
-                      {dict.availability.allDayOption}
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={dayState === 'specific'}
-                      onClick={() => setHoursType(day.dayOfWeek, 'specific')}
-                      className={[
-                        'border-l border-gray-300 px-3 py-2 transition-colors',
-                        dayState === 'specific'
-                          ? 'bg-black text-white'
-                          : 'text-gray-700 hover:bg-gray-50',
-                      ].join(' ')}
-                    >
-                      {dict.availability.specificOption}
-                    </button>
-                  </div>
+                  <HoursTypeMenu
+                    dict={dict}
+                    dayState={dayState}
+                    isOpen={hoursMenuDay === day.dayOfWeek}
+                    onToggle={() => setHoursMenuDay(hoursMenuDay === day.dayOfWeek ? null : day.dayOfWeek)}
+                    onSelect={(hoursType) => selectHoursType(day.dayOfWeek, hoursType)}
+                    className="hidden sm:block"
+                  />
                 )}
 
                 {expanded && (
