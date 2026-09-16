@@ -1,10 +1,8 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import LanguageSwitcher from '@/app/components/LanguageSwitcher'
 import WeekNav from '@/app/components/WeekNav'
 import {
   addDays,
@@ -68,28 +66,9 @@ export default async function AvailabilityPage({
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{dict.availability.title}</h1>
-          <p className="mt-1 text-sm text-gray-500">{dict.availability.subtitle}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/employee/schedule"
-            className="rounded-md border border-black px-3 py-2 text-sm font-medium text-black hover:bg-gray-50"
-          >
-            {dict.availability.myScheduleLink}
-          </Link>
-          {employee.role === 'manager' && (
-            <Link
-              href="/manager"
-              className="rounded-md border border-black px-3 py-2 text-sm font-medium text-black hover:bg-gray-50"
-            >
-              {dict.manager.availabilityOverviewTitle}
-            </Link>
-          )}
-          <LanguageSwitcher locale={locale} label={dict.languageSwitcher.label} />
-        </div>
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">{dict.availability.title}</h1>
+        <p className="mt-1 text-sm text-gray-500">{dict.availability.subtitle}</p>
       </div>
 
       <WeekNav

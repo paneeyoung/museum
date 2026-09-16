@@ -74,6 +74,7 @@ const dictionaries = {
       availabilityOverviewTitle: 'Availability overview',
       employeeColumn: 'Employee',
       myAvailabilityLink: 'My availability',
+      backToManagerButton: '← Back to manager',
       notSubmitted: 'Not submitted',
       scheduleEditorTitle: 'Schedule editor',
       scheduleEditorSubtitle:
@@ -264,6 +265,7 @@ const dictionaries = {
       availabilityOverviewTitle: 'Beschikbaarheidsoverzicht',
       employeeColumn: 'Medewerker',
       myAvailabilityLink: 'Mijn beschikbaarheid',
+      backToManagerButton: '← Terug naar manager',
       notSubmitted: 'Niet ingevuld',
       scheduleEditorTitle: 'Roostereditor',
       scheduleEditorSubtitle:

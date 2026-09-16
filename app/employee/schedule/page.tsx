@@ -1,10 +1,8 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import LanguageSwitcher from '@/app/components/LanguageSwitcher'
 import WeekNav from '@/app/components/WeekNav'
 import {
   addWeeks,
@@ -90,20 +88,9 @@ export default async function EmployeeSchedulePage({
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{dict.employeeSchedule.title}</h1>
-          <p className="mt-1 text-sm text-gray-500">{dict.employeeSchedule.subtitle}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/employee/availability"
-            className="rounded-md border border-black px-3 py-2 text-sm font-medium text-black hover:bg-gray-50"
-          >
-            {dict.availability.title}
-          </Link>
-          <LanguageSwitcher locale={locale} label={dict.languageSwitcher.label} />
-        </div>
+      <div>
+        <h1 className="text-xl font-semibold text-gray-900">{dict.employeeSchedule.title}</h1>
+        <p className="mt-1 text-sm text-gray-500">{dict.employeeSchedule.subtitle}</p>
       </div>
 
       <WeekNav
