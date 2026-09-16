@@ -3,11 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import WeekNav from '@/app/components/WeekNav'
 import {
   addDays,
-  addWeeks,
-  buildWeekOptions,
   formatDayLabel,
   nextWeekStart,
   parseISODate,
@@ -19,8 +16,6 @@ import AvailabilityForm, {
   DEFAULT_START_TIME,
   type DayAvailability,
 } from './AvailabilityForm'
-
-const WEEKS_AHEAD_IN_PICKER = 12
 
 export default async function AvailabilityPage({
   searchParams,
@@ -62,25 +57,12 @@ export default async function AvailabilityPage({
     }
   })
 
-  const weekOptions = buildWeekOptions(weekStart, WEEKS_AHEAD_IN_PICKER, locale)
-
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
       <div>
         <h1 className="text-xl font-semibold text-gray-900">{dict.availability.title}</h1>
         <p className="mt-1 text-sm text-gray-500">{dict.availability.subtitle}</p>
       </div>
-
-      <WeekNav
-        basePath="/employee/availability"
-        weekStartDate={weekStartDate}
-        weekOptions={weekOptions}
-        prevWeek={toISODate(addWeeks(weekStart, -1))}
-        nextWeek={toISODate(addWeeks(weekStart, 1))}
-        prevLabel={dict.availability.prevWeek}
-        nextLabel={dict.availability.nextWeek}
-        homeLabel={dict.availability.currentWeek}
-      />
 
       <div className="mt-6">
         <AvailabilityForm key={weekStartDate} weekStartDate={weekStartDate} days={days} dict={dict} locale={locale} />

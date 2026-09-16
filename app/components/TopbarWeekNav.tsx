@@ -8,9 +8,9 @@ import type { Locale } from '@/lib/i18n/locales'
 
 const WEEKS_AHEAD_IN_PICKER = 12
 
-// Only these two manager pages have a week concept — everywhere else this
-// renders nothing.
-const WEEK_AWARE_PATHS = ['/manager', '/manager/schedule']
+// Only these pages have a week concept — everywhere else this renders
+// nothing. Shared by both ManagerTopbar and EmployeeTopbar.
+const WEEK_AWARE_PATHS = ['/manager', '/manager/schedule', '/employee/availability']
 
 function ChevronLeftIcon() {
   return (

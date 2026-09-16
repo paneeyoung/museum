@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LanguageToggle from './LanguageToggle'
+import TopbarWeekNav from './TopbarWeekNav'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import type { Locale } from '@/lib/i18n/locales'
 
@@ -138,6 +139,9 @@ export default function EmployeeTopbar({
         </button>
 
         <div className="flex flex-wrap items-center gap-3">
+          <Suspense fallback={null}>
+            <TopbarWeekNav dict={dict} locale={locale} />
+          </Suspense>
           {isManager && (
             <Link
               href="/manager"

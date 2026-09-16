@@ -68,7 +68,7 @@ export default async function ManagerPage({
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead>
             <tr className="bg-gray-50">
-              <th className="px-4 py-3 text-left font-medium text-gray-500">
+              <th className="sticky left-0 z-10 border-r border-gray-200 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500">
                 {dict.manager.employeeColumn}
               </th>
               {WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => (
@@ -86,7 +86,9 @@ export default async function ManagerPage({
               const byDay = availabilityByEmployee.get(emp.id)
               return (
                 <tr key={emp.id}>
-                  <td className="px-4 py-3 font-medium text-gray-900">{emp.full_name}</td>
+                  <td className="sticky left-0 z-10 border-r border-gray-200 bg-white px-4 py-3 font-medium text-gray-900">
+                    {emp.full_name}
+                  </td>
                   {WEEK_DISPLAY_ORDER.map((dayOfWeek) => {
                     const row = byDay?.get(dayOfWeek)
                     const cellClass = !row
