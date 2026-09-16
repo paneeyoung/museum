@@ -54,7 +54,7 @@ function CopyIcon() {
 
 function ChevronDownIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-gray-400">
+    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
       <path
         fillRule="evenodd"
         d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
@@ -64,13 +64,12 @@ function ChevronDownIcon() {
   )
 }
 
-// A day is "all day" by default, so most rows never need the hours type
-// touched — tucking it behind this small dropdown (instead of an
-// always-visible "Hele dag / Specifieke tijd" toggle bar on every row) keeps
-// the common case compact, and lets it sit directly beside the
-// available/unavailable buttons on mobile instead of spilling onto its own
-// row. The time pickers only appear once "Specifieke tijd" is actually
-// chosen.
+// A day is "all day" by default the moment you tap the check button — this
+// dropdown is only for the exception (a specific start/end time), so it's a
+// small icon-only trigger next to check/X rather than a labeled control:
+// nothing to read when every day is the default, and it still stands out
+// (filled) once a day is actually set to a specific time. The time pickers
+// only appear once "Specifieke tijd" is chosen from it.
 function HoursTypeMenu({
   dict,
   dayState,
@@ -86,16 +85,23 @@ function HoursTypeMenu({
   onSelect: (hoursType: 'allDay' | 'specific') => void
   className?: string
 }) {
-  const label = dayState === 'specific' ? dict.availability.specificOption : dict.availability.allDayOption
+  const isSpecific = dayState === 'specific'
+  const label = isSpecific ? dict.availability.specificOption : dict.availability.allDayOption
   return (
     <div className={`relative shrink-0 ${className}`}>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
-        className="flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+        title={label}
+        aria-label={label}
+        className={[
+          'flex h-9 w-9 items-center justify-center rounded-full border transition-colors',
+          isSpecific
+            ? 'border-black bg-black text-white'
+            : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
+        ].join(' ')}
       >
-        {label}
         <ChevronDownIcon />
       </button>
       {isOpen && (
