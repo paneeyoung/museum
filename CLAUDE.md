@@ -11,7 +11,7 @@ manually before publishing.
 ## Tech stack
 - Next.js 16 (App Router, TypeScript, Tailwind CSS)
 - Supabase (Postgres + magic-link auth)
-- Hosting: Vercel (planned, not yet deployed)
+- Hosting: Vercel — LIVE at rooster.panee.nl
 - i18n: EN + NL, dictionaries in lib/i18n/dictionaries.ts
 
 ## Key decisions already made (don't re-litigate these)
