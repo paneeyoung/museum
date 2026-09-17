@@ -13,7 +13,8 @@ Project folder: `/Users/panee/Documents/PaneeMA/Papa/Staff rooster/staff-roster`
 ## Tech stack
 - Frontend: Next.js 16 (TypeScript, Tailwind CSS, App Router)
 - Database/Auth: Supabase (magic-link login)
-- Hosting (planned): Vercel
+- Hosting: Vercel — LIVE at rooster.panee.nl
+  (GitHub: paneeyoung/museum, Supabase ref: ccripfrbujnemjxyljlz)
 
 ## Build order status
 1. ✅ Project setup + Supabase connection
@@ -35,6 +36,8 @@ None currently.
 2. `cd "/Users/panee/Documents/PaneeMA/Papa/Staff rooster/staff-roster"`
 3. `claude`
 4. Say: "Read staff-roster-progress.md and CLAUDE.md, continue from where we left off"
+5. `git push` must be run yourself from a real Terminal on this machine — not
+   through the Cowork bridge, which has no GitHub credentials
 
 ## Notes
 - This is being built on a personal/private setup — keep Supabase and any other
