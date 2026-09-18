@@ -205,62 +205,44 @@ export default async function ManagerSchedulePage({
         {dict.schedule.printTitle} — {formatWeekRangeLabel(weekStart, locale)}
       </h1>
 
-      <div className="print:hidden">
-        {/* Below md, AddShiftForm/CopyToWeekForm render only their trigger
-            button (their full forms are md:hidden), so this flex row just
-            sits the two buttons side by side. At md+, `md:contents` makes
-            this wrapper disappear from the box model entirely — the two
-            child divs become direct children of the div above exactly as
-            before, stacking full-width with their own md:mt-* spacing. */}
-        <div className="mt-3 flex flex-wrap items-center gap-3 md:contents">
-          <div className="md:mt-3">
-            {hasFunctions ? (
-              <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
-            ) : (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <p>{dict.shifts.noFunctionsWarning}</p>
-                <Link href="/manager/functions" className="mt-2 inline-block font-medium underline">
-                  {dict.shifts.goToFunctions}
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {(shifts ?? []).length > 0 && (
-            <div className="md:mt-4">
-              <CopyToWeekForm
-                weekStartDate={weekStartDate}
-                weekOptions={weekOptions.filter((w) => w.value !== weekStartDate)}
-                dict={dict}
-              />
-            </div>
-          )}
-        </div>
-
-        {canCopyPreviousWeek && (
-          <form action={copyPreviousWeek.bind(null, weekStartDate)} className="mt-4">
-            <button
-              type="submit"
-              className="rounded-md border border-black px-3 py-2 text-sm font-medium text-black hover:bg-gray-50"
-            >
-              {dict.shifts.copyPreviousWeek}
-            </button>
-          </form>
-        )}
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-start justify-between gap-4 print:hidden">
-        <div className="flex flex-wrap items-start gap-3">
-          <AutoPlanButton
+      <div className="flex flex-wrap items-start gap-3 print:hidden">
+        <AutoPlanButton
+          weekStartDate={weekStartDate}
+          hasExistingDraft={hasDraft}
+          disabled={isPublished}
+          dict={dict}
+        />
+        {(shifts ?? []).length > 0 && (
+          <CopyToWeekForm
             weekStartDate={weekStartDate}
-            hasExistingDraft={hasDraft}
-            disabled={isPublished}
+            weekOptions={weekOptions.filter((w) => w.value !== weekStartDate)}
             dict={dict}
           />
-          <PrintButton dict={dict} />
-        </div>
+        )}
+        <PrintButton dict={dict} />
+        {hasFunctions ? (
+          <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
+        ) : (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p>{dict.shifts.noFunctionsWarning}</p>
+            <Link href="/manager/functions" className="mt-2 inline-block font-medium underline">
+              {dict.shifts.goToFunctions}
+            </Link>
+          </div>
+        )}
         {roster && <PublishControls rosterId={roster.id} isPublished={isPublished} dict={dict} />}
       </div>
+
+      {canCopyPreviousWeek && (
+        <form action={copyPreviousWeek.bind(null, weekStartDate)} className="mt-4 print:hidden">
+          <button
+            type="submit"
+            className="rounded-md border border-black px-3 py-2 text-sm font-medium text-black hover:bg-gray-50"
+          >
+            {dict.shifts.copyPreviousWeek}
+          </button>
+        </form>
+      )}
 
       <div className="mt-4">
         {(shifts ?? []).length === 0 && (

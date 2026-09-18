@@ -1,5 +1,6 @@
 'use client'
 
+import Tooltip from '@/app/components/Tooltip'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 
 function PrinterIcon() {
@@ -21,14 +22,16 @@ function PrinterIcon() {
 
 export default function PrintButton({ dict }: { dict: Dictionary }) {
   return (
-    <button
-      type="button"
-      onClick={() => window.print()}
-      aria-label={dict.schedule.printButton}
-      className="flex items-center justify-center gap-2 rounded-md border border-gray-300 p-2 text-sm font-medium text-gray-700 hover:bg-gray-50 md:px-4 md:py-2"
-    >
-      <PrinterIcon />
-      <span className="hidden md:inline">{dict.schedule.printButton}</span>
-    </button>
+    <Tooltip text={dict.schedule.printButton}>
+      <button
+        type="button"
+        onClick={() => window.print()}
+        aria-label={dict.schedule.printButton}
+        className="flex items-center justify-center gap-2 rounded-md border border-gray-300 p-2 text-sm font-medium text-gray-700 hover:bg-gray-50 md:px-4 md:py-2"
+      >
+        <PrinterIcon />
+        <span className="hidden md:inline">{dict.schedule.printButtonShort}</span>
+      </button>
+    </Tooltip>
   )
 }
