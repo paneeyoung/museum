@@ -17,7 +17,7 @@ export async function GET(request: Request) {
           .select('role')
           .eq('id', data.user.id)
           .maybeSingle()
-        destination = employee?.role === 'manager' ? '/manager' : '/employee/availability'
+        destination = employee?.role === 'manager' ? '/manager/availability' : '/employee/availability'
       }
       return NextResponse.redirect(`${origin}${destination}`)
     }

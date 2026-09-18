@@ -36,6 +36,7 @@ const dictionaries = {
       nextWeek: 'Next week →',
       currentWeek: 'Back to current week',
       myScheduleLink: 'My schedule',
+      navLabel: 'Availability',
       unavailable: 'Not available',
       allDay: 'Available all day',
       specific: 'Specific hours',
@@ -72,9 +73,9 @@ const dictionaries = {
     },
     manager: {
       availabilityOverviewTitle: 'Availability overview',
+      overviewTabLabel: 'Overview',
       employeeColumn: 'Employee',
       myAvailabilityLink: 'My availability',
-      backToManagerButton: '← Back to manager',
       notSubmitted: 'Not submitted',
       scheduleEditorTitle: 'Schedule editor',
       scheduleEditorSubtitle:
@@ -227,6 +228,7 @@ const dictionaries = {
       nextWeek: 'Volgende week →',
       currentWeek: 'Terug naar deze week',
       myScheduleLink: 'Mijn rooster',
+      navLabel: 'Beschikbaarheid',
       unavailable: 'Niet beschikbaar',
       allDay: 'Hele dag beschikbaar',
       specific: 'Specifieke tijd',
@@ -263,9 +265,9 @@ const dictionaries = {
     },
     manager: {
       availabilityOverviewTitle: 'Beschikbaarheidsoverzicht',
+      overviewTabLabel: 'Overzicht',
       employeeColumn: 'Medewerker',
       myAvailabilityLink: 'Mijn beschikbaarheid',
-      backToManagerButton: '← Terug naar manager',
       notSubmitted: 'Niet ingevuld',
       scheduleEditorTitle: 'Roostereditor',
       scheduleEditorSubtitle:

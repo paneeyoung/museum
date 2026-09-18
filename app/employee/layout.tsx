@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import EmployeeTopbar from '@/app/components/EmployeeTopbar'
+import Topbar from '@/app/components/Topbar'
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const employee = await getCurrentEmployee()
@@ -13,7 +13,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
 
   return (
     <div>
-      <EmployeeTopbar dict={dict} locale={locale} isManager={employee.role === 'manager'} />
+      <Topbar dict={dict} locale={locale} isManager={employee.role === 'manager'} />
       {children}
     </div>
   )

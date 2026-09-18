@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import ManagerTopbar from '@/app/components/ManagerTopbar'
+import Topbar from '@/app/components/Topbar'
 import { ToastProvider } from '@/app/components/Toast'
 
 export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +16,7 @@ export default async function ManagerLayout({ children }: { children: React.Reac
   return (
     <ToastProvider>
       <div>
-        <ManagerTopbar dict={dict} locale={locale} />
+        <Topbar dict={dict} locale={locale} isManager />
         {children}
       </div>
     </ToastProvider>
