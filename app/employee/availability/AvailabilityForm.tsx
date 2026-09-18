@@ -64,63 +64,92 @@ function ChevronDownIcon() {
   )
 }
 
-// A day is "all day" by default the moment you tap the check button — this
-// dropdown is only for the exception (a specific start/end time), so it's a
-// small icon-only trigger next to check/X rather than a labeled control:
-// nothing to read when every day is the default, and it still stands out
-// (filled) once a day is actually set to a specific time. The time pickers
-// only appear once "Specifieke tijd" is chosen from it.
-function HoursTypeMenu({
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+      <circle cx="10" cy="10" r="7" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6.75V10l2.25 1.25" />
+    </svg>
+  )
+}
+
+// A day is "all day" by default the moment you tap the pill — the chevron is
+// only for the exception (a specific start/end time), split off Gmail-RSVP
+// style so the common case (tap to mark available) stays a single click
+// while the less common one (pick a specific time) is still one tap away.
+// Once a day is set to a specific time, the chevron's job flips: instead of
+// opening a menu, it directly toggles back to "hele dag" — there's only ever
+// one other hours type to switch to, so a full dropdown would be one extra
+// click for no reason.
+function AvailablePill({
   dict,
   dayState,
-  isOpen,
-  onToggle,
-  onSelect,
+  isMenuOpen,
+  onToggleAvailable,
+  onChevronClick,
+  onSelectSpecific,
   className = '',
 }: {
   dict: Dictionary
   dayState: AvailabilityDayState
-  isOpen: boolean
-  onToggle: () => void
-  onSelect: (hoursType: 'allDay' | 'specific') => void
+  isMenuOpen: boolean
+  onToggleAvailable: () => void
+  onChevronClick: () => void
+  onSelectSpecific: () => void
   className?: string
 }) {
+  const available = dayState !== 'unavailable'
   const isSpecific = dayState === 'specific'
-  const label = isSpecific ? dict.availability.specificOption : dict.availability.allDayOption
-  return (
-    <div className={`relative shrink-0 ${className}`}>
+
+  if (!available) {
+    return (
       <button
         type="button"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        title={label}
-        aria-label={label}
-        className={[
-          'flex h-9 w-9 items-center justify-center rounded-full border transition-colors',
-          isSpecific
-            ? 'border-black bg-black text-white'
-            : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600',
-        ].join(' ')}
+        aria-pressed={false}
+        title={dict.availability.availableLabel}
+        onClick={onToggleAvailable}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-300 text-gray-400 transition-colors hover:border-green-400 hover:text-green-600 ${className}`}
       >
-        <ChevronDownIcon />
+        <CheckIcon />
       </button>
-      {isOpen && (
+    )
+  }
+
+  const chevronLabel = isSpecific ? dict.availability.allDayOption : dict.availability.specificOption
+
+  return (
+    <div className={`relative shrink-0 ${className}`}>
+      <div
+        role="group"
+        aria-label={dict.availability.availableLabel}
+        className="flex h-9 items-stretch overflow-hidden rounded-full border border-green-600 bg-green-600 text-white"
+      >
+        <button
+          type="button"
+          aria-pressed={true}
+          title={dict.availability.availableLabel}
+          onClick={onToggleAvailable}
+          className="flex items-center justify-center pl-3 pr-2 transition-colors hover:bg-black/10"
+        >
+          {isSpecific ? <ClockIcon /> : <CheckIcon />}
+        </button>
+        <button
+          type="button"
+          aria-expanded={isMenuOpen}
+          title={chevronLabel}
+          aria-label={chevronLabel}
+          onClick={onChevronClick}
+          className="flex items-center justify-center border-l border-white/30 pl-1 pr-2.5 transition-colors hover:bg-black/10"
+        >
+          <ChevronDownIcon />
+        </button>
+      </div>
+      {isMenuOpen && (
         <div className="absolute left-0 top-full z-20 mt-1 w-40 rounded-md border border-gray-200 bg-white p-1 text-sm shadow-lg">
           <button
             type="button"
-            onClick={() => onSelect('allDay')}
-            className={`block w-full rounded px-3 py-2 text-left hover:bg-gray-50 ${
-              dayState !== 'specific' ? 'font-medium text-gray-900' : 'text-gray-700'
-            }`}
-          >
-            {dict.availability.allDayOption}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSelect('specific')}
-            className={`block w-full rounded px-3 py-2 text-left hover:bg-gray-50 ${
-              dayState === 'specific' ? 'font-medium text-gray-900' : 'text-gray-700'
-            }`}
+            onClick={onSelectSpecific}
+            className="block w-full rounded px-3 py-2 text-left text-gray-700 hover:bg-gray-50"
           >
             {dict.availability.specificOption}
           </button>
@@ -227,6 +256,20 @@ export default function AvailabilityForm({
     setHoursMenuDay(null)
   }
 
+  // The chevron only ever opens a real dropdown when there's a choice to
+  // make (going from "hele dag" to "specifieke tijd" — the single menu
+  // item). Once a day is already "specifieke tijd", the only other option
+  // is "hele dag", so the chevron toggles straight to it instead of opening
+  // a one-item menu.
+  function onChevronClick(day: number) {
+    if (dayStates[day] === 'specific') {
+      setHoursType(day, 'allDay')
+      setHoursMenuDay(null)
+    } else {
+      setHoursMenuDay((prev) => (prev === day ? null : day))
+    }
+  }
+
   function openCopyMenu(day: number) {
     setCopyMenuDay(day)
     setCopyTargets(new Set())
@@ -256,7 +299,7 @@ export default function AvailabilityForm({
     <form action={formAction} autoComplete="off" className="space-y-4">
       <input type="hidden" name="weekStartDate" value={weekStartDate} />
 
-      <div className="divide-y divide-gray-200 rounded-lg border border-gray-200">
+      <div className="max-w-2xl divide-y divide-gray-200 rounded-lg border border-gray-200">
         {days.map((day) => {
           const dayState = dayStates[day.dayOfWeek]
           const available = dayState !== 'unavailable'
@@ -264,7 +307,7 @@ export default function AvailabilityForm({
           return (
             <div
               key={day.dayOfWeek}
-              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between"
+              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8"
             >
               <div className="flex items-center justify-between gap-2 sm:w-32 sm:justify-start">
                 <div className="flex items-center gap-2">
@@ -338,21 +381,15 @@ export default function AvailabilityForm({
                     in favor of the identical pair further right (see below),
                     which keeps every row's controls aligned at the same x
                     position regardless of how long each day's name is. */}
-                <div role="group" aria-label={dict.availability.availableLabel} className="flex items-center gap-2 sm:hidden">
-                  <button
-                    type="button"
-                    aria-pressed={available}
-                    title={dict.availability.availableLabel}
-                    onClick={() => setAvailable(day.dayOfWeek, true)}
-                    className={[
-                      'flex h-9 w-9 items-center justify-center rounded-full border transition-colors',
-                      available
-                        ? 'border-green-600 bg-green-600 text-white'
-                        : 'border-gray-300 text-gray-400 hover:border-green-400 hover:text-green-600',
-                    ].join(' ')}
-                  >
-                    <CheckIcon />
-                  </button>
+                <div className="flex items-center gap-2 sm:hidden">
+                  <AvailablePill
+                    dict={dict}
+                    dayState={dayState}
+                    isMenuOpen={hoursMenuDay === day.dayOfWeek}
+                    onToggleAvailable={() => setAvailable(day.dayOfWeek, true)}
+                    onChevronClick={() => onChevronClick(day.dayOfWeek)}
+                    onSelectSpecific={() => selectHoursType(day.dayOfWeek, 'specific')}
+                  />
                   <button
                     type="button"
                     aria-pressed={!available}
@@ -367,15 +404,6 @@ export default function AvailabilityForm({
                   >
                     <XIcon />
                   </button>
-                  {available && (
-                    <HoursTypeMenu
-                      dict={dict}
-                      dayState={dayState}
-                      isOpen={hoursMenuDay === day.dayOfWeek}
-                      onToggle={() => setHoursMenuDay(hoursMenuDay === day.dayOfWeek ? null : day.dayOfWeek)}
-                      onSelect={(hoursType) => selectHoursType(day.dayOfWeek, hoursType)}
-                    />
-                  )}
                 </div>
               </div>
 
@@ -384,21 +412,15 @@ export default function AvailabilityForm({
               <div className="flex flex-1 flex-wrap items-center gap-3">
                 {/* Desktop (sm+) version of the same available/unavailable pair —
                     see the comment on the mobile version above. */}
-                <div role="group" aria-label={dict.availability.availableLabel} className="hidden items-center gap-2 sm:flex">
-                  <button
-                    type="button"
-                    aria-pressed={available}
-                    title={dict.availability.availableLabel}
-                    onClick={() => setAvailable(day.dayOfWeek, true)}
-                    className={[
-                      'flex h-9 w-9 items-center justify-center rounded-full border transition-colors',
-                      available
-                        ? 'border-green-600 bg-green-600 text-white'
-                        : 'border-gray-300 text-gray-400 hover:border-green-400 hover:text-green-600',
-                    ].join(' ')}
-                  >
-                    <CheckIcon />
-                  </button>
+                <div className="hidden items-center gap-2 sm:flex">
+                  <AvailablePill
+                    dict={dict}
+                    dayState={dayState}
+                    isMenuOpen={hoursMenuDay === day.dayOfWeek}
+                    onToggleAvailable={() => setAvailable(day.dayOfWeek, true)}
+                    onChevronClick={() => onChevronClick(day.dayOfWeek)}
+                    onSelectSpecific={() => selectHoursType(day.dayOfWeek, 'specific')}
+                  />
                   <button
                     type="button"
                     aria-pressed={!available}
@@ -414,17 +436,6 @@ export default function AvailabilityForm({
                     <XIcon />
                   </button>
                 </div>
-
-                {available && (
-                  <HoursTypeMenu
-                    dict={dict}
-                    dayState={dayState}
-                    isOpen={hoursMenuDay === day.dayOfWeek}
-                    onToggle={() => setHoursMenuDay(hoursMenuDay === day.dayOfWeek ? null : day.dayOfWeek)}
-                    onSelect={(hoursType) => selectHoursType(day.dayOfWeek, hoursType)}
-                    className="hidden sm:block"
-                  />
-                )}
 
                 {expanded && (
                   <div className="flex items-center gap-2">
