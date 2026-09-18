@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import { addDays, formatDayLabel, nextWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
+import { addDays, nextWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
 
 type AvailabilityRow = {
   employee_id: string
@@ -73,10 +73,10 @@ export default async function ManagerAvailabilityPage({
               </th>
               {WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => (
                 <th key={dayOfWeek} className="px-4 py-3 text-left font-medium text-gray-500">
-                  <div>{dict.common.dayNames[dayOfWeek]}</div>
-                  <div className="font-normal text-gray-400">
-                    {formatDayLabel(addDays(weekStart, dayIndex), locale)}
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                    {dict.common.dayAbbrev[dayOfWeek]}
                   </div>
+                  <div className="text-base font-bold text-gray-900">{addDays(weekStart, dayIndex).getDate()}</div>
                 </th>
               ))}
             </tr>

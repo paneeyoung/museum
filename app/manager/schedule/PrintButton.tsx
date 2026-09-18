@@ -27,7 +27,7 @@ export default function PrintButton({ dict }: { dict: Dictionary }) {
         type="button"
         onClick={() => window.print()}
         aria-label={dict.schedule.printButton}
-        className="flex items-center justify-center gap-2 rounded-md border border-gray-300 p-2 text-sm font-medium text-gray-700 hover:bg-gray-50 md:px-4 md:py-2"
+        className="flex items-center justify-center gap-2 rounded-full border border-gray-300 p-2 text-sm font-medium text-gray-700 hover:bg-gray-50 md:px-4 md:py-2"
       >
         <PrinterIcon />
         <span className="hidden md:inline">{dict.schedule.printButtonShort}</span>

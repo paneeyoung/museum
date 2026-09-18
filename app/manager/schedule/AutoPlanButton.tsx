@@ -49,7 +49,7 @@ export default function AutoPlanButton({
       <button
         type="submit"
         disabled={pending || disabled}
-        className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
       >
         <WandIcon />
         {pending ? dict.schedule.autoPlanRunning : dict.schedule.autoPlanButton}

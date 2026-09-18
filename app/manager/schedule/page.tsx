@@ -47,7 +47,23 @@ function shiftDurationHours(startTime: string, endTime: string): number {
   return (endHours * 60 + endMinutes - (startHours * 60 + startMinutes)) / 60
 }
 
-function cardStyleForFunction(functionId: string) {
+// Named overrides for specific functions, keyed by their current display
+// name (functions have no other manager-facing identity to key off) —
+// shared by the group header row and its shift cells so both stay in the
+// same color family; anything not listed here keeps the default styling.
+const FUNCTION_GROUP_THEME_BG: Record<string, string> = {
+  Baliemedewerker: 'bg-[#F7FAFF]',
+  'Algemeen - Sleutelhouder': 'bg-[#FCF6FF]',
+}
+
+function functionGroupRowClass(functionName: string): string {
+  return FUNCTION_GROUP_THEME_BG[functionName] ?? 'bg-gray-100'
+}
+
+function cardStyleForFunction(functionId: string, functionName: string) {
+  const themedBg = FUNCTION_GROUP_THEME_BG[functionName]
+  if (themedBg) return `border-gray-200 ${themedBg}`
+
   let hash = 0
   for (let i = 0; i < functionId.length; i++) {
     hash = (hash * 31 + functionId.charCodeAt(i)) | 0
@@ -220,17 +236,17 @@ export default async function ManagerSchedulePage({
           />
         )}
         <PrintButton dict={dict} />
+        {roster && <PublishControls rosterId={roster.id} isPublished={isPublished} dict={dict} />}
         {hasFunctions ? (
           <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
         ) : (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <p>{dict.shifts.noFunctionsWarning}</p>
             <Link href="/manager/functions" className="mt-2 inline-block font-medium underline">
               {dict.shifts.goToFunctions}
             </Link>
           </div>
         )}
-        {roster && <PublishControls rosterId={roster.id} isPublished={isPublished} dict={dict} />}
       </div>
 
       {canCopyPreviousWeek && (
@@ -257,7 +273,7 @@ export default async function ManagerSchedulePage({
         )}
 
         {(shifts ?? []).length > 0 && (
-          <div className="overflow-x-auto pb-2 print:overflow-visible">
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white pb-2 shadow-md print:overflow-visible print:rounded-none print:border-0 print:shadow-none">
             <table className="w-full min-w-[900px] table-fixed border-collapse text-xs print:min-w-0 print:text-[10px]">
               <colgroup>
                 <col style={{ width: '14%' }} />
@@ -271,11 +287,11 @@ export default async function ManagerSchedulePage({
                 <tr>
                   <th className="border border-gray-200 bg-gray-50 p-2 text-left"></th>
                   {WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => (
-                    <th key={dayOfWeek} className="border border-gray-200 bg-gray-100 p-2 text-center">
-                      <p className="text-sm font-medium text-gray-900">{dict.common.dayNames[dayOfWeek]}</p>
-                      <p className="text-xs font-normal text-gray-500">
-                        {formatDayLabel(addDays(weekStart, dayIndex), locale)}
+                    <th key={dayOfWeek} className="border border-gray-200 bg-white p-2 text-center">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                        {dict.common.dayAbbrev[dayOfWeek]}
                       </p>
+                      <p className="text-base font-bold text-gray-900">{addDays(weekStart, dayIndex).getDate()}</p>
                     </th>
                   ))}
                 </tr>
@@ -286,7 +302,7 @@ export default async function ManagerSchedulePage({
                     <tr className="break-inside-avoid">
                       <td
                         colSpan={WEEK_DISPLAY_ORDER.length + 1}
-                        className="border border-gray-200 bg-gray-100 px-2 py-1.5"
+                        className={`border border-gray-200 px-2 py-1.5 ${functionGroupRowClass(functionNameById.get(functionId) ?? '')}`}
                       >
                         <div className="flex items-center gap-2">
                           <FunctionReorderButtons
@@ -373,7 +389,7 @@ export default async function ManagerSchedulePage({
                               return (
                                 <td
                                   key={dayOfWeek}
-                                  className={`border p-2 align-top ${cardStyleForFunction(shift.function_id)}`}
+                                  className={`border p-2 align-top ${cardStyleForFunction(shift.function_id, functionNameById.get(shift.function_id) ?? '')}`}
                                 >
                                   {slotIndex === 0 && (
                                     <ShiftCellHeader

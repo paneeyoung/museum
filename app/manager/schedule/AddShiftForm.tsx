@@ -54,7 +54,7 @@ export default function AddShiftForm({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
+          className="flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-medium text-white"
         >
           <PlusIcon />
           {dict.shifts.addButtonShort}
