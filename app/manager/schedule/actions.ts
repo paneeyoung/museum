@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { addWeeks, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
+import { WEEK_DISPLAY_ORDER } from '@/lib/weeks'
 
 export type AddShiftErrorCode = 'errorMissingFields' | 'errorStartBeforeEnd' | 'errorGeneric'
 
@@ -276,44 +276,6 @@ export async function renameShiftGroup(
   return { status: 'success' }
 }
 
-export async function copyPreviousWeek(weekStartDate: string) {
-  const supabase = await createClient()
-  const prevWeek = toISODate(addWeeks(parseISODate(weekStartDate), -1))
-
-  const { count } = await supabase
-    .from('shifts_template')
-    .select('id', { count: 'exact', head: true })
-    .eq('week_start_date', weekStartDate)
-
-  // Safety: never duplicate into a week that already has shifts.
-  if (count && count > 0) {
-    return
-  }
-
-  const { data: prevShifts } = await supabase
-    .from('shifts_template')
-    .select('day_of_week, start_time, end_time, shift_name, capacity, function_id')
-    .eq('week_start_date', prevWeek)
-
-  if (!prevShifts || prevShifts.length === 0) {
-    return
-  }
-
-  await supabase.from('shifts_template').insert(
-    prevShifts.map((s) => ({
-      week_start_date: weekStartDate,
-      day_of_week: s.day_of_week,
-      start_time: s.start_time,
-      end_time: s.end_time,
-      shift_name: s.shift_name,
-      capacity: s.capacity,
-      function_id: s.function_id,
-    }))
-  )
-
-  revalidatePath('/manager/schedule')
-}
-
 export type CopyMode = 'merge' | 'overwrite'
 
 export type CopyToWeekErrorCode =
@@ -345,14 +307,12 @@ function shiftMatchKey(s: { function_id: string; day_of_week: number; start_time
   return `${s.function_id}::${s.day_of_week}::${s.start_time}::${s.end_time}`
 }
 
-// Forward-direction sibling of copyPreviousWeek: copies the currently-viewed
-// week's shifts into one or more weeks the manager picks, instead of only
-// pulling the previous week into an empty current one. Unlike
-// copyPreviousWeek (which only ever targets an empty week), a target week
-// here may already have shifts, so the manager picks how to handle that per
-// copy: 'merge' (default) only adds shifts that don't already exist there;
-// 'overwrite' deletes the target week's existing shifts_template rows first
-// (cascading to roster_shifts, so any draft assignments on them go too).
+// Copies the currently-viewed week's shifts into one or more weeks the
+// manager picks. A target week may already have shifts, so the manager
+// picks how to handle that per copy: 'merge' (default) only adds shifts
+// that don't already exist there; 'overwrite' deletes the target week's
+// existing shifts_template rows first (cascading to roster_shifts, so any
+// draft assignments on them go too).
 export async function copyShiftsToWeek(
   sourceWeekStartDate: string,
   _prevState: CopyToWeekState,

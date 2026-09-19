@@ -13,7 +13,6 @@ import {
   toISODate,
   WEEK_DISPLAY_ORDER,
 } from '@/lib/weeks'
-import { copyPreviousWeek } from './actions'
 import AddShiftForm from './AddShiftForm'
 import AddShiftCell from './AddShiftCell'
 import AutoPlanButton from './AutoPlanButton'
@@ -97,6 +96,78 @@ type ShiftRowGroup = {
   byDay: Map<number, ShiftRow>
 }
 
+// Manual assignment needs a roster_shifts row to attach to (see
+// AssignmentSelect below) — without ever running Auto-plan, a week would
+// otherwise have no roster row at all and every cell would be stuck
+// showing a bare '—'. Called from the page's data-fetching (not a Server
+// Action, and deliberately not one: it runs during this render, and
+// revalidatePath can only be called from a Server Action/Route Handler,
+// never mid-render — not needed here anyway, since the page already has
+// the fresh row in hand from this very call, see below). Safe to call
+// again later (e.g. after more shifts are added): it only tops up shifts
+// missing their full slot count, so it never disturbs an existing draft.
+//
+// Returns the roster row directly instead of leaving the caller to
+// re-SELECT it — re-querying with the exact same filter used moments
+// earlier (the page's own initial `roster` lookup) hit React's automatic
+// fetch request memoization within this render: the second, identical GET
+// was served from the *first* query's (pre-write) cached result instead of
+// hitting the network again, so the just-created row never showed up until
+// a fresh render (a later navigation) started a new memoization scope.
+async function ensureDraftRoster(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  weekStartDate: string
+): Promise<{ id: string; is_published: boolean } | null> {
+  const { data: shifts, error: shiftsError } = await supabase
+    .from('shifts_template')
+    .select('id, capacity')
+    .eq('week_start_date', weekStartDate)
+
+  if (shiftsError) console.error('ensureDraftRoster shifts lookup failed:', shiftsError)
+  if (!shifts || shifts.length === 0) return null
+
+  const { data: roster, error: rosterError } = await supabase
+    .from('roster')
+    .upsert({ week_start_date: weekStartDate }, { onConflict: 'week_start_date' })
+    .select('id, is_published')
+    .single()
+
+  if (rosterError) {
+    console.error('ensureDraftRoster roster upsert failed:', rosterError)
+    return null
+  }
+  if (!roster || roster.is_published) return roster
+
+  const { data: existingSlots, error: existingSlotsError } = await supabase
+    .from('roster_shifts')
+    .select('shift_template_id')
+    .eq('roster_id', roster.id)
+
+  if (existingSlotsError) console.error('ensureDraftRoster existing-slots lookup failed:', existingSlotsError)
+
+  const existingCountByShift = new Map<string, number>()
+  for (const row of existingSlots ?? []) {
+    existingCountByShift.set(row.shift_template_id, (existingCountByShift.get(row.shift_template_id) ?? 0) + 1)
+  }
+
+  const newRows = shifts.flatMap((shift) => {
+    const missing = shift.capacity - (existingCountByShift.get(shift.id) ?? 0)
+    if (missing <= 0) return []
+    return Array.from({ length: missing }, () => ({
+      roster_id: roster.id,
+      shift_template_id: shift.id,
+      employee_id: null,
+    }))
+  })
+
+  if (newRows.length > 0) {
+    const { error } = await supabase.from('roster_shifts').insert(newRows)
+    if (error) console.error('ensureDraftRoster insert failed:', error)
+  }
+
+  return roster
+}
+
 export default async function ManagerSchedulePage({
   searchParams,
 }: {
@@ -108,15 +179,13 @@ export default async function ManagerSchedulePage({
   const { week } = await searchParams
   const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : nextWeekStart()
   const weekStartDate = toISODate(weekStart)
-  const prevWeekStartDate = toISODate(addWeeks(weekStart, -1))
 
   const supabase = await createClient()
   const [
     { data: shifts },
     { data: functions, error: functionsError },
     { data: employees },
-    { data: roster },
-    { count: prevWeekShiftCount },
+    { data: rosterInitial },
   ] = await Promise.all([
       supabase
         .from('shifts_template')
@@ -130,13 +199,19 @@ export default async function ManagerSchedulePage({
         .select('id, is_published')
         .eq('week_start_date', weekStartDate)
         .maybeSingle(),
-      supabase
-        .from('shifts_template')
-        .select('id', { count: 'exact', head: true })
-        .eq('week_start_date', prevWeekStartDate),
     ])
 
   if (functionsError) console.error('Failed to load functions for schedule grid:', functionsError)
+
+  // Create an empty draft transparently the first time this page is
+  // viewed for a week that has shifts but no roster yet, so manual
+  // assignment always just works, Auto-plan or not (see ensureDraftRoster
+  // above for why this is a plain write here rather than a Server Action,
+  // and why it hands back the row instead of the caller re-querying it).
+  let roster = rosterInitial
+  if (!roster && (shifts ?? []).length > 0) {
+    roster = await ensureDraftRoster(supabase, weekStartDate)
+  }
 
   const { data: rosterShifts } = roster
     ? await supabase
@@ -208,7 +283,6 @@ export default async function ManagerSchedulePage({
   })
 
   const hasFunctions = (functions ?? []).length > 0
-  const canCopyPreviousWeek = (shifts ?? []).length === 0 && (prevWeekShiftCount ?? 0) > 0
   const hasDraft = (rosterShifts ?? []).length > 0
   const isPublished = roster?.is_published ?? false
 
@@ -248,17 +322,6 @@ export default async function ManagerSchedulePage({
           </div>
         )}
       </div>
-
-      {canCopyPreviousWeek && (
-        <form action={copyPreviousWeek.bind(null, weekStartDate)} className="mt-4 print:hidden">
-          <button
-            type="submit"
-            className="rounded-md border border-black px-3 py-2 text-sm font-medium text-black hover:bg-gray-50"
-          >
-            {dict.shifts.copyPreviousWeek}
-          </button>
-        </form>
-      )}
 
       <div className="mt-4">
         {(shifts ?? []).length === 0 && (
@@ -338,7 +401,7 @@ export default async function ManagerSchedulePage({
                         )
                         return (
                           <tr key={`${functionId}-${group.shiftName}-${slotIndex}`} className="break-inside-avoid">
-                            <td className="border border-gray-200 bg-gray-50 p-2 align-top text-xs font-medium text-gray-700">
+                            <td className="border border-gray-200 bg-white p-2 align-top text-xs font-medium text-gray-700">
                               <ShiftRowLabel
                                 shiftIds={[...group.byDay.values()].map((s) => s.id)}
                                 shiftName={group.shiftName}
