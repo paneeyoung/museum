@@ -77,15 +77,18 @@ function ClockIcon() {
 // only for the exception (a specific start/end time), split off Gmail-RSVP
 // style so the common case (tap to mark available) stays a single click
 // while the less common one (pick a specific time) is still one tap away.
-// Once a day is set to a specific time, the chevron's job flips: instead of
-// opening a menu, it directly toggles back to "hele dag" — there's only ever
-// one other hours type to switch to, so a full dropdown would be one extra
-// click for no reason.
+// The pill body always toggles directly between hele dag and specifieke
+// tijd (in either direction) once a day is available; the chevron is just
+// an alternate route to the same "switch to specifieke tijd" action from
+// hele dag, and — since there's only ever one other hours type — toggles
+// straight back to hele dag itself when already on specifieke tijd, rather
+// than opening a one-item menu.
 function AvailablePill({
   dict,
   dayState,
   isMenuOpen,
   onToggleAvailable,
+  onToggleHoursType,
   onChevronClick,
   onSelectSpecific,
   className = '',
@@ -94,6 +97,7 @@ function AvailablePill({
   dayState: AvailabilityDayState
   isMenuOpen: boolean
   onToggleAvailable: () => void
+  onToggleHoursType: () => void
   onChevronClick: () => void
   onSelectSpecific: () => void
   className?: string
@@ -127,8 +131,8 @@ function AvailablePill({
         <button
           type="button"
           aria-pressed={true}
-          title={dict.availability.availableLabel}
-          onClick={onToggleAvailable}
+          title={isSpecific ? dict.availability.allDayOption : dict.availability.specificOption}
+          onClick={onToggleHoursType}
           className="flex items-center justify-center pl-3 pr-2 transition-colors hover:bg-black/10"
         >
           {isSpecific ? <ClockIcon /> : <CheckIcon />}
@@ -254,6 +258,13 @@ export default function AvailabilityForm({
   function selectHoursType(day: number, hoursType: 'allDay' | 'specific') {
     setHoursType(day, hoursType)
     setHoursMenuDay(null)
+  }
+
+  // The pill body's primary click, once a day is available: always toggles
+  // directly between the two hours types, both directions — no dropdown
+  // needed either way.
+  function toggleHoursType(day: number) {
+    setHoursType(day, dayStates[day] === 'specific' ? 'allDay' : 'specific')
   }
 
   // The chevron only ever opens a real dropdown when there's a choice to
@@ -387,6 +398,7 @@ export default function AvailabilityForm({
                     dayState={dayState}
                     isMenuOpen={hoursMenuDay === day.dayOfWeek}
                     onToggleAvailable={() => setAvailable(day.dayOfWeek, true)}
+                    onToggleHoursType={() => toggleHoursType(day.dayOfWeek)}
                     onChevronClick={() => onChevronClick(day.dayOfWeek)}
                     onSelectSpecific={() => selectHoursType(day.dayOfWeek, 'specific')}
                   />
@@ -418,6 +430,7 @@ export default function AvailabilityForm({
                     dayState={dayState}
                     isMenuOpen={hoursMenuDay === day.dayOfWeek}
                     onToggleAvailable={() => setAvailable(day.dayOfWeek, true)}
+                    onToggleHoursType={() => toggleHoursType(day.dayOfWeek)}
                     onChevronClick={() => onChevronClick(day.dayOfWeek)}
                     onSelectSpecific={() => selectHoursType(day.dayOfWeek, 'specific')}
                   />

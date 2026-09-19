@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import { runAutoPlan, type AutoPlanState } from './actions'
+import { usePublishAutoPlanState } from './AutoPlanStatus'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 
 const initialState: AutoPlanState = { status: 'idle' }
@@ -37,6 +38,13 @@ export default function AutoPlanButton({
   const boundAction = runAutoPlan.bind(null, weekStartDate)
   const [state, formAction, pending] = useActionState(boundAction, initialState)
 
+  // The run result renders below the whole button row (see
+  // AutoPlanRunStatus in page.tsx), not attached to this button — a
+  // wide status message here, in or out of flow, either widens this flex
+  // item or floats detached from it. Publishing the state up is the only
+  // way to place it on its own line without either problem.
+  usePublishAutoPlanState(state)
+
   return (
     <form
       action={formAction}
@@ -54,18 +62,6 @@ export default function AutoPlanButton({
         <WandIcon />
         {pending ? dict.schedule.autoPlanRunning : dict.schedule.autoPlanButton}
       </button>
-
-      {disabled && <p className="mt-2 text-sm text-gray-500">{dict.schedule.lockedNotice}</p>}
-      {state.status === 'error' && state.errorCode && (
-        <p className="mt-2 text-sm text-red-600">{dict.schedule[state.errorCode]}</p>
-      )}
-      {state.status === 'success' && (
-        <p className="mt-2 text-sm text-green-700">
-          {dict.schedule.slotsFilledSummary
-            .replace('{filled}', String(state.filledSlots))
-            .replace('{total}', String(state.totalSlots))}
-        </p>
-      )}
     </form>
   )
 }

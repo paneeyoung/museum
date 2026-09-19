@@ -10,7 +10,12 @@ const WEEKS_AHEAD_IN_PICKER = 12
 
 // Only these pages have a week concept — everywhere else this renders
 // nothing. Shared by the unified Topbar for both roles.
-const WEEK_AWARE_PATHS = ['/manager/availability', '/manager/schedule', '/employee/availability']
+const WEEK_AWARE_PATHS = [
+  '/manager/availability',
+  '/manager/schedule',
+  '/employee/availability',
+  '/employee/schedule',
+]
 
 function ChevronLeftIcon() {
   return (

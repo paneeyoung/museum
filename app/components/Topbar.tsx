@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LanguageToggle from './LanguageToggle'
 import TopbarWeekNav from './TopbarWeekNav'
+import { TopbarStatusSlot } from './TopbarStatus'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import type { Locale } from '@/lib/i18n/locales'
 
@@ -349,6 +350,7 @@ export default function Topbar({
           <Suspense fallback={null}>
             <TopbarWeekNav dict={dict} locale={locale} />
           </Suspense>
+          <TopbarStatusSlot />
           <div className="hidden items-center gap-1 md:flex">
             <LanguageToggle locale={locale} label={dict.languageSwitcher.label} />
           </div>

@@ -24,6 +24,8 @@ import ShiftCellHeader from './ShiftCellHeader'
 import ShiftRowLabel from './ShiftRowLabel'
 import CopyToWeekForm from './CopyToWeekForm'
 import PrintButton from './PrintButton'
+import { TopbarStatus } from '@/app/components/TopbarStatus'
+import { AutoPlanStatusProvider, AutoPlanRunStatus } from './AutoPlanStatus'
 import { getAvailabilityStatus } from '@/lib/availabilityStatus'
 
 const WEEKS_AHEAD_IN_PICKER = 12
@@ -325,14 +327,22 @@ export default async function ManagerSchedulePage({
       (functionOrderById.get(b) ?? Number.MAX_SAFE_INTEGER)
   )
 
-  // The picker always shows WEEKS_AHEAD_IN_PICKER weeks starting from
-  // whichever is earlier: the real "next week" or the week currently being
-  // viewed. This keeps the currently viewed week inside the window (so it
-  // always has room to show weeks after it) even when the manager has
-  // navigated far into the future or past, instead of always anchoring to
-  // real-world "today" and running out of future options.
+  // The picker window starts from whichever is earlier — the real "next
+  // week" or the week currently being viewed — so a manager who's
+  // navigated into the past never loses early options. But anchoring the
+  // *start* isn't enough on its own: if the viewed week is far ahead of
+  // "today", a fixed-length window counted from that start mostly gets
+  // consumed just reaching the viewed week, leaving little or no room
+  // *after* it. So the window's length is relative to the viewed week
+  // instead of fixed — it always includes at least WEEKS_AHEAD_IN_PICKER
+  // weeks past whichever week is actually being viewed right now,
+  // regardless of how far that is from real-world "today".
   const weekOptionsWindowStart = weekStart < nextWeekStart() ? weekStart : nextWeekStart()
-  const weekOptions = Array.from({ length: WEEKS_AHEAD_IN_PICKER }, (_, i) => {
+  const weeksFromWindowStartToViewed = Math.round(
+    (weekStart.getTime() - weekOptionsWindowStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
+  )
+  const weekOptionsCount = weeksFromWindowStartToViewed + WEEKS_AHEAD_IN_PICKER
+  const weekOptions = Array.from({ length: weekOptionsCount }, (_, i) => {
     const start = addWeeks(weekOptionsWindowStart, i)
     return { value: toISODate(start), label: formatWeekRangeLabel(start, locale) }
   })
@@ -350,48 +360,63 @@ export default async function ManagerSchedulePage({
         {dict.schedule.printTitle} — {formatWeekRangeLabel(weekStart, locale)}
       </h1>
 
-      <div className="flex flex-wrap items-start gap-3 print:hidden">
-        <AutoPlanButton
-          weekStartDate={weekStartDate}
-          hasExistingDraft={hasDraft}
-          disabled={isPublished}
-          dict={dict}
-        />
-        {(shifts ?? []).length > 0 && (
-          <CopyToWeekForm
+      {isPublished && (
+        <TopbarStatus>
+          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+            {dict.schedule.publishedBadge}
+          </span>
+        </TopbarStatus>
+      )}
+
+      <AutoPlanStatusProvider>
+        <div className="flex flex-wrap items-start justify-start gap-3 print:hidden">
+          <AutoPlanButton
             weekStartDate={weekStartDate}
-            weekOptions={weekOptions.filter((w) => w.value !== weekStartDate)}
+            hasExistingDraft={hasDraft}
+            disabled={isPublished}
             dict={dict}
           />
-        )}
-        <PrintButton dict={dict} />
-        {roster && <PublishControls rosterId={roster.id} isPublished={isPublished} dict={dict} />}
-        {hasFunctions ? (
-          <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
-        ) : (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <p>{dict.shifts.noFunctionsWarning}</p>
-            <Link href="/manager/functions" className="mt-2 inline-block font-medium underline">
-              {dict.shifts.goToFunctions}
-            </Link>
-          </div>
-        )}
-      </div>
+          {(shifts ?? []).length > 0 && (
+            <CopyToWeekForm
+              weekStartDate={weekStartDate}
+              weekOptions={weekOptions.filter((w) => w.value !== weekStartDate)}
+              dict={dict}
+            />
+          )}
+          <PrintButton dict={dict} />
+          {roster && <PublishControls rosterId={roster.id} isPublished={isPublished} dict={dict} />}
+          {hasFunctions ? (
+            <AddShiftForm weekStartDate={weekStartDate} functions={functions ?? []} dict={dict} />
+          ) : (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p>{dict.shifts.noFunctionsWarning}</p>
+              <Link href="/manager/functions" className="mt-2 inline-block font-medium underline">
+                {dict.shifts.goToFunctions}
+              </Link>
+            </div>
+          )}
+        </div>
 
-      <div className="mt-4">
-        {(shifts ?? []).length === 0 && (
-          <p className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
-            {dict.shifts.noShiftsYet}
-          </p>
-        )}
-        {(shifts ?? []).length > 0 && !hasDraft && (
-          <p className="mb-3 rounded-lg border border-gray-200 p-3 text-sm text-gray-500">
-            {dict.schedule.noDraftYet}
-          </p>
-        )}
+        <div className="mt-4">
+          {(shifts ?? []).length === 0 && (
+            <p className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">
+              {dict.shifts.noShiftsYet}
+            </p>
+          )}
+          {(shifts ?? []).length > 0 && !hasDraft && (
+            <p className="mb-3 rounded-lg border border-gray-200 p-3 text-sm text-gray-500">
+              {dict.schedule.noDraftYet}
+            </p>
+          )}
+          {isPublished && (
+            <p className="mb-3 rounded-lg border border-gray-200 p-3 text-sm text-gray-500">
+              {dict.schedule.lockedNotice}
+            </p>
+          )}
+          <AutoPlanRunStatus dict={dict} />
 
-        {(shifts ?? []).length > 0 && (
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white pb-2 shadow-md print:overflow-visible print:rounded-none print:border-0 print:shadow-none">
+          {(shifts ?? []).length > 0 && (
+            <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white pb-2 shadow-md print:overflow-visible print:rounded-none print:border-0 print:shadow-none">
             <table className="w-full min-w-[900px] table-fixed border-collapse text-xs print:min-w-0 print:text-[10px]">
               <colgroup>
                 <col style={{ width: '14%' }} />
@@ -556,7 +581,8 @@ export default async function ManagerSchedulePage({
             </table>
           </div>
         )}
-      </div>
+        </div>
+      </AutoPlanStatusProvider>
     </main>
   )
 }

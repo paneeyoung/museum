@@ -18,24 +18,19 @@ export default function PublishControls({
 
   if (isPublished) {
     return (
-      <div className="flex items-center gap-3">
-        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-          {dict.schedule.publishedBadge}
-        </span>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => {
-            if (!window.confirm(dict.schedule.unpublishConfirm)) return
-            startTransition(() => {
-              unpublishRoster(rosterId)
-            })
-          }}
-          className="rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-        >
-          {dict.schedule.unpublishButton}
-        </button>
-      </div>
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() => {
+          if (!window.confirm(dict.schedule.unpublishConfirm)) return
+          startTransition(() => {
+            unpublishRoster(rosterId)
+          })
+        }}
+        className="rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+      >
+        {dict.schedule.unpublishButton}
+      </button>
     )
   }
 

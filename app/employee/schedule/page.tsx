@@ -3,17 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import WeekNav from '@/app/components/WeekNav'
-import {
-  addWeeks,
-  buildWeekOptions,
-  nextWeekStart,
-  parseISODate,
-  toISODate,
-  WEEK_DISPLAY_ORDER,
-} from '@/lib/weeks'
-
-const WEEKS_AHEAD_IN_PICKER = 12
+import { addDays, formatDayLabel, nextWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
 
 type ShiftRow = {
   id: string
@@ -84,8 +74,6 @@ export default async function EmployeeSchedulePage({
     shiftsByDay.set(shift.day_of_week, list)
   }
 
-  const weekOptions = buildWeekOptions(weekStart, WEEKS_AHEAD_IN_PICKER, locale)
-
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
       <div>
@@ -93,55 +81,49 @@ export default async function EmployeeSchedulePage({
         <p className="mt-1 text-sm text-gray-500">{dict.employeeSchedule.subtitle}</p>
       </div>
 
-      <WeekNav
-        basePath="/employee/schedule"
-        weekStartDate={weekStartDate}
-        weekOptions={weekOptions}
-        prevWeek={toISODate(addWeeks(weekStart, -1))}
-        nextWeek={toISODate(addWeeks(weekStart, 1))}
-        prevLabel={dict.availability.prevWeek}
-        nextLabel={dict.availability.nextWeek}
-        homeLabel={dict.availability.currentWeek}
-      />
-
-      <div className="mt-6 divide-y divide-gray-200 rounded-lg border border-gray-200">
+      <div className="mt-6 divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
         {!isPublished && <p className="p-4 text-sm text-gray-500">{dict.employeeSchedule.noScheduleYet}</p>}
         {isPublished &&
-          WEEK_DISPLAY_ORDER.filter((dayOfWeek) => shiftsByDay.has(dayOfWeek)).map((dayOfWeek) => (
-            <div key={dayOfWeek} className="p-4">
-              <p className="font-medium text-gray-900">{dict.common.dayNames[dayOfWeek]}</p>
-              <ul className="mt-2 space-y-2">
-                {shiftsByDay.get(dayOfWeek)!.flatMap((shift) =>
-                  (slotsByShift.get(shift.id) ?? []).map((slot) => {
-                    const isMe = slot.employee_id === employee.id
-                    return (
-                      <li
-                        key={slot.id}
-                        className={`flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2 text-sm ${
-                          isMe ? 'bg-blue-50 ring-1 ring-inset ring-blue-200' : 'bg-gray-50'
-                        }`}
-                      >
-                        <span>
-                          <span className="font-medium text-gray-900">{shift.shift_name}</span>{' '}
-                          <span className="text-gray-600">
-                            {shift.start_time.slice(0, 5)}–{shift.end_time.slice(0, 5)} ·{' '}
-                            {functionNameById.get(shift.function_id) ?? '—'}
+          WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => ({ dayOfWeek, dayIndex }))
+            .filter(({ dayOfWeek }) => shiftsByDay.has(dayOfWeek))
+            .map(({ dayOfWeek, dayIndex }) => (
+              <div key={dayOfWeek} className="p-4">
+                <p className="flex items-baseline gap-2">
+                  <span className="font-medium text-gray-900">{dict.common.dayNames[dayOfWeek]}</span>
+                  <span className="text-sm text-gray-400">{formatDayLabel(addDays(weekStart, dayIndex), locale)}</span>
+                </p>
+                <ul className="mt-2 space-y-2">
+                  {shiftsByDay.get(dayOfWeek)!.flatMap((shift) =>
+                    (slotsByShift.get(shift.id) ?? []).map((slot) => {
+                      const isMe = slot.employee_id === employee.id
+                      return (
+                        <li
+                          key={slot.id}
+                          className={`flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2 text-sm ${
+                            isMe ? 'bg-brand-light ring-1 ring-inset ring-brand/30' : 'bg-gray-50'
+                          }`}
+                        >
+                          <span>
+                            <span className="font-medium text-gray-900">{shift.shift_name}</span>{' '}
+                            <span className="text-gray-600">
+                              {shift.start_time.slice(0, 5)}–{shift.end_time.slice(0, 5)} ·{' '}
+                              {functionNameById.get(shift.function_id) ?? '—'}
+                            </span>
                           </span>
-                        </span>
-                        <span className={isMe ? 'font-medium text-blue-800' : 'text-gray-600'}>
-                          {slot.employee_id
-                            ? isMe
-                              ? dict.employeeSchedule.youLabel
-                              : (employeeNameById.get(slot.employee_id) ?? '—')
-                            : dict.schedule.unfilledBadge}
-                        </span>
-                      </li>
-                    )
-                  })
-                )}
-              </ul>
-            </div>
-          ))}
+                          <span className={isMe ? 'font-medium text-brand' : 'text-gray-600'}>
+                            {slot.employee_id
+                              ? isMe
+                                ? dict.employeeSchedule.youLabel
+                                : (employeeNameById.get(slot.employee_id) ?? '—')
+                              : dict.schedule.unfilledBadge}
+                          </span>
+                        </li>
+                      )
+                    })
+                  )}
+                </ul>
+              </div>
+            ))}
       </div>
     </main>
   )

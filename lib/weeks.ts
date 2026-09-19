@@ -66,28 +66,3 @@ export function formatMonthYearLabel(date: Date, locale: Locale): string {
 }
 
 export const MAX_REPEAT_WEEKS = 52
-
-// A week picker's <option> list is normally a fixed forward-looking window
-// starting at nextWeekStart(). But Prev/Next nav can step outside that
-// window (far enough back via "previous", or far enough forward past the
-// last listed week) — a controlled <select> whose value has no matching
-// <option> silently falls back to showing the first option instead, so the
-// dropdown label goes out of sync with the (correctly fetched) page below
-// it. Always make sure the week actually being viewed has an entry.
-export function buildWeekOptions(
-  currentWeekStart: Date,
-  count: number,
-  locale: Locale
-): { value: string; label: string }[] {
-  const options = Array.from({ length: count }, (_, i) => {
-    const start = addWeeks(nextWeekStart(), i)
-    return { value: toISODate(start), label: formatWeekRangeLabel(start, locale) }
-  })
-
-  const currentWeekStartDate = toISODate(currentWeekStart)
-  if (!options.some((option) => option.value === currentWeekStartDate)) {
-    options.unshift({ value: currentWeekStartDate, label: formatWeekRangeLabel(currentWeekStart, locale) })
-  }
-
-  return options
-}
