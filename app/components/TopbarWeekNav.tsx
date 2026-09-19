@@ -48,22 +48,31 @@ export default function TopbarWeekNav({ dict, locale }: { dict: Dictionary; loca
   const prevWeek = toISODate(addWeeks(weekStart, -1))
   const nextWeek = toISODate(addWeeks(weekStart, 1))
 
-  const weekOptions = Array.from({ length: WEEKS_AHEAD_IN_PICKER }, (_, i) => {
-    const start = addWeeks(nextWeekStart(), i)
+  // The window starts from whichever is earlier — the real "next week" or
+  // the week currently being viewed — and always extends at least
+  // WEEKS_AHEAD_IN_PICKER weeks past the viewed week specifically, not just
+  // a fixed 12 weeks from today. Same fix as CopyToWeekForm's window: a flat
+  // 12-week span from "today" runs out of room once the viewed week is far
+  // enough ahead, leaving a gap between the last listed week and wherever
+  // the manager has actually navigated to (the old code only patched over
+  // this by tacking the viewed week on by itself, which masked the gap
+  // instead of closing it).
+  const soonestWeekStart = nextWeekStart()
+  const weekOptionsWindowStart = weekStart < soonestWeekStart ? weekStart : soonestWeekStart
+  const weeksFromWindowStartToViewed = Math.round(
+    (weekStart.getTime() - weekOptionsWindowStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
+  )
+  const weekOptionsCount = weeksFromWindowStartToViewed + WEEKS_AHEAD_IN_PICKER
+  const weekOptions = Array.from({ length: weekOptionsCount }, (_, i) => {
+    const start = addWeeks(weekOptionsWindowStart, i)
+    const startDate = toISODate(start)
     const label = formatWeekRangeLabel(start, locale)
-    // First option is the soonest schedulable week — mark it so it's easy
-    // to spot/jump back to among the other 11.
-    return { value: toISODate(start), label: i === 0 ? `🏠 ${label}` : label }
+    // Mark the soonest schedulable week specifically (not just whichever
+    // option happens to be first — that's no longer always the same thing
+    // once the window can start earlier than "today", from viewing a past
+    // week), so it's still easy to spot/jump back to.
+    return { value: startDate, label: startDate === toISODate(soonestWeekStart) ? `🏠 ${label}` : label }
   })
-
-  // Prev/next can step outside that fixed forward-looking window (e.g.
-  // clicking "previous" from the soonest week, or "next" past the last
-  // listed one) — without a matching <option>, the native <select> just
-  // shows nothing selected. Make sure whichever week is actually being
-  // viewed always has one.
-  if (!weekOptions.some((option) => option.value === weekStartDate)) {
-    weekOptions.unshift({ value: weekStartDate, label: formatWeekRangeLabel(weekStart, locale) })
-  }
 
   return (
     <div className="flex items-center gap-1.5">
