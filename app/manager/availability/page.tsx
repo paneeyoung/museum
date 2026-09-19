@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import { addDays, nextWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
+import { getAvailabilityStatus, type AvailabilityStatus } from '@/lib/availabilityStatus'
 
 type AvailabilityRow = {
   employee_id: string
@@ -10,6 +11,13 @@ type AvailabilityRow = {
   end_time: string
   is_available: boolean
   is_all_day: boolean
+}
+
+const STATUS_CELL_CLASS: Record<AvailabilityStatus, string> = {
+  notSubmitted: 'bg-white text-gray-400 italic',
+  unavailable: 'bg-red-50 text-red-700',
+  allDay: 'bg-green-50 text-green-800',
+  specific: 'bg-amber-50 text-amber-900',
 }
 
 export default async function ManagerAvailabilityPage({
@@ -91,15 +99,9 @@ export default async function ManagerAvailabilityPage({
                   </td>
                   {WEEK_DISPLAY_ORDER.map((dayOfWeek) => {
                     const row = byDay?.get(dayOfWeek)
-                    const cellClass = !row
-                      ? 'bg-white text-gray-400 italic'
-                      : !row.is_available
-                        ? 'bg-red-50 text-red-700'
-                        : row.is_all_day
-                          ? 'bg-green-50 text-green-800'
-                          : 'bg-amber-50 text-amber-900'
+                    const status = getAvailabilityStatus(row)
                     return (
-                      <td key={dayOfWeek} className={`px-4 py-3 ${cellClass}`}>
+                      <td key={dayOfWeek} className={`px-4 py-3 ${STATUS_CELL_CLASS[status]}`}>
                         {!row ? (
                           dict.manager.notSubmitted
                         ) : !row.is_available ? (

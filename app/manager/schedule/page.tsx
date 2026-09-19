@@ -24,6 +24,7 @@ import ShiftCellHeader from './ShiftCellHeader'
 import ShiftRowLabel from './ShiftRowLabel'
 import CopyToWeekForm from './CopyToWeekForm'
 import PrintButton from './PrintButton'
+import { getAvailabilityStatus } from '@/lib/availabilityStatus'
 
 const WEEKS_AHEAD_IN_PICKER = 12
 
@@ -186,6 +187,8 @@ export default async function ManagerSchedulePage({
     { data: functions, error: functionsError },
     { data: employees },
     { data: rosterInitial },
+    { data: employeeFunctions },
+    { data: availability },
   ] = await Promise.all([
       supabase
         .from('shifts_template')
@@ -199,6 +202,11 @@ export default async function ManagerSchedulePage({
         .select('id, is_published')
         .eq('week_start_date', weekStartDate)
         .maybeSingle(),
+      supabase.from('employee_functions').select('employee_id, function_id'),
+      supabase
+        .from('availability')
+        .select('employee_id, day_of_week, is_available, is_all_day')
+        .eq('week_start_date', weekStartDate),
     ])
 
   if (functionsError) console.error('Failed to load functions for schedule grid:', functionsError)
@@ -226,6 +234,53 @@ export default async function ManagerSchedulePage({
   // functions was fetched already ordered by sort_order — array index is
   // the manager-controlled display order (adjustable on /manager/functions).
   const functionOrderById = new Map((functions ?? []).map((f, i) => [f.id, i]))
+
+  const functionIdsByEmployee = new Map<string, Set<string>>()
+  for (const row of employeeFunctions ?? []) {
+    if (!functionIdsByEmployee.has(row.employee_id)) {
+      functionIdsByEmployee.set(row.employee_id, new Set())
+    }
+    functionIdsByEmployee.get(row.employee_id)!.add(row.function_id)
+  }
+
+  // Same shape as manager/availability/page.tsx's availabilityByEmployee —
+  // this page just needs one specific (employee, day) lookup at a time
+  // (see employeeOptionsFor below) rather than a whole employee's week.
+  const availabilityByEmployeeDay = new Map<string, Map<number, { is_available: boolean; is_all_day: boolean }>>()
+  for (const row of availability ?? []) {
+    if (!availabilityByEmployeeDay.has(row.employee_id)) {
+      availabilityByEmployeeDay.set(row.employee_id, new Map())
+    }
+    availabilityByEmployeeDay.get(row.employee_id)!.set(row.day_of_week, row)
+  }
+
+  // The function shown next to an employee's name in the assignment
+  // dropdown: the shift's own required function if they have it, otherwise
+  // whichever of their other functions sorts first in the manager-controlled
+  // order (functionOrderById) — same ordering already used to lay out the
+  // function groups in the grid itself, so this stays consistent with it.
+  function primaryFunctionLabel(employeeId: string, shiftFunctionId: string): string | null {
+    const employeeFunctionIds = functionIdsByEmployee.get(employeeId)
+    if (!employeeFunctionIds || employeeFunctionIds.size === 0) return null
+    if (employeeFunctionIds.has(shiftFunctionId)) return functionNameById.get(shiftFunctionId) ?? null
+
+    const sorted = [...employeeFunctionIds].sort(
+      (a, b) => (functionOrderById.get(a) ?? Number.MAX_SAFE_INTEGER) - (functionOrderById.get(b) ?? Number.MAX_SAFE_INTEGER)
+    )
+    return functionNameById.get(sorted[0]) ?? null
+  }
+
+  // Enriches the plain employee list with what the assignment dropdown
+  // needs to show for *this* shift specifically: their relevant function,
+  // and their availability status for this exact day (not the whole week).
+  function employeeOptionsFor(shift: ShiftRow) {
+    return (employees ?? []).map((e) => ({
+      id: e.id,
+      full_name: e.full_name,
+      functionLabel: primaryFunctionLabel(e.id, shift.function_id),
+      status: getAvailabilityStatus(availabilityByEmployeeDay.get(e.id)?.get(shift.day_of_week)),
+    }))
+  }
 
   const slotsByShift = new Map<string, RosterShiftRow[]>()
   for (const row of rosterShifts ?? []) {
@@ -481,7 +536,7 @@ export default async function ManagerSchedulePage({
                                       key={slot.id}
                                       rosterShiftId={slot.id}
                                       employeeId={slot.employee_id}
-                                      employees={employees ?? []}
+                                      employees={employeeOptionsFor(shift)}
                                       dict={dict}
                                       disabled={isPublished}
                                     />
