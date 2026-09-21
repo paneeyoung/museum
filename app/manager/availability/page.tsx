@@ -3,6 +3,7 @@ import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import { addDays, nextWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
 import { getAvailabilityStatus, type AvailabilityStatus } from '@/lib/availabilityStatus'
+import WeekDayHeaderCell from '@/app/components/WeekDayHeaderCell'
 
 type AvailabilityRow = {
   employee_id: string
@@ -72,20 +73,19 @@ export default async function ManagerAvailabilityPage({
         </span>
       </div>
 
-      <div className="mt-3 overflow-x-auto rounded-lg border border-gray-200">
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-md">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead>
-            <tr className="bg-gray-50">
+            <tr>
               <th className="sticky left-0 z-10 border-r border-gray-200 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500">
                 {dict.manager.employeeColumn}
               </th>
               {WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => (
-                <th key={dayOfWeek} className="px-4 py-3 text-left font-medium text-gray-500">
-                  <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                    {dict.common.dayAbbrev[dayOfWeek]}
-                  </div>
-                  <div className="text-base font-bold text-gray-900">{addDays(weekStart, dayIndex).getDate()}</div>
-                </th>
+                <WeekDayHeaderCell
+                  key={dayOfWeek}
+                  dayLabel={dict.common.dayAbbrev[dayOfWeek]}
+                  dayNumber={addDays(weekStart, dayIndex).getDate()}
+                />
               ))}
             </tr>
           </thead>

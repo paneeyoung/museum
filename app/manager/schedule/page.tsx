@@ -25,6 +25,7 @@ import ShiftRowLabel from './ShiftRowLabel'
 import CopyToWeekForm from './CopyToWeekForm'
 import PrintButton from './PrintButton'
 import { TopbarStatus } from '@/app/components/TopbarStatus'
+import WeekDayHeaderCell from '@/app/components/WeekDayHeaderCell'
 import { AutoPlanStatusProvider, AutoPlanRunStatus } from './AutoPlanStatus'
 import { getAvailabilityStatus } from '@/lib/availabilityStatus'
 
@@ -430,12 +431,11 @@ export default async function ManagerSchedulePage({
                 <tr>
                   <th className="border border-gray-200 bg-gray-50 p-2 text-left"></th>
                   {WEEK_DISPLAY_ORDER.map((dayOfWeek, dayIndex) => (
-                    <th key={dayOfWeek} className="border border-gray-200 bg-white p-2 text-center">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                        {dict.common.dayAbbrev[dayOfWeek]}
-                      </p>
-                      <p className="text-base font-bold text-gray-900">{addDays(weekStart, dayIndex).getDate()}</p>
-                    </th>
+                    <WeekDayHeaderCell
+                      key={dayOfWeek}
+                      dayLabel={dict.common.dayAbbrev[dayOfWeek]}
+                      dayNumber={addDays(weekStart, dayIndex).getDate()}
+                    />
                   ))}
                 </tr>
               </thead>
