@@ -33,10 +33,10 @@ export default async function EmployeesPage() {
         <InviteEmployeeForm functions={functions ?? []} dict={dict} />
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-md">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead>
-            <tr className="bg-gray-50">
+            <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500">{dict.employees.nameColumn}</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">{dict.employees.emailColumn}</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">{dict.employees.roleColumn}</th>

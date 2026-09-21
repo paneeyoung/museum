@@ -21,7 +21,7 @@ export default function InviteEmployeeForm({
   }, [state])
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4 rounded-lg border border-gray-200 p-4">
+    <form ref={formRef} action={formAction} className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-md">
       <h2 className="text-sm font-medium text-gray-900">{dict.employees.inviteTitle}</h2>
 
       <div className="flex flex-wrap gap-3">
@@ -83,7 +83,7 @@ export default function InviteEmployeeForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
           {dict.employees.inviteButton}
         </button>

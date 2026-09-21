@@ -27,11 +27,11 @@ export default async function FunctionsPage() {
       <h1 className="text-xl font-semibold text-gray-900">{dict.functions.title}</h1>
       <p className="mt-1 text-sm text-gray-500">{dict.functions.subtitle}</p>
 
-      <div className="mt-6">
+      <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-md">
         <AddFunctionForm dict={dict} />
       </div>
 
-      <ul className="mt-6 divide-y divide-gray-200 rounded-lg border border-gray-200">
+      <ul className="mt-6 divide-y divide-gray-200 rounded-2xl border border-gray-200 bg-white shadow-md">
         {(functions ?? []).length === 0 && (
           <li className="p-4 text-sm text-gray-500">{dict.functions.noFunctionsYet}</li>
         )}
