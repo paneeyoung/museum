@@ -310,7 +310,7 @@ export default function AvailabilityForm({
     <form action={formAction} autoComplete="off" className="space-y-4">
       <input type="hidden" name="weekStartDate" value={weekStartDate} />
 
-      <div className="max-w-2xl divide-y divide-gray-200 rounded-lg border border-gray-200">
+      <div className="max-w-2xl divide-y divide-gray-200 rounded-2xl border border-gray-200 bg-white shadow-md">
         {days.map((day) => {
           const dayState = dayStates[day.dayOfWeek]
           const available = dayState !== 'unavailable'
@@ -370,7 +370,7 @@ export default function AvailabilityForm({
                             type="button"
                             onClick={applyCopy}
                             disabled={copyTargets.size === 0}
-                            className="rounded-md bg-black px-3 py-1 text-white disabled:opacity-40"
+                            className="rounded-full bg-brand px-3 py-1 text-white hover:bg-brand-hover disabled:opacity-40"
                           >
                             {dict.availability.copyApply}
                           </button>
@@ -498,7 +498,7 @@ export default function AvailabilityForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
         >
           {pending ? dict.availability.saving : dict.availability.save}
         </button>
