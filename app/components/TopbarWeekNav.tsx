@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from 'next/navigation'
 import WeekSelect from './WeekSelect'
-import { addWeeks, formatWeekRangeLabel, nextWeekStart, parseISODate, toISODate } from '@/lib/weeks'
+import { addWeeks, currentWeekStart, formatWeekRangeLabel, parseISODate, toISODate } from '@/lib/weeks'
 import type { Dictionary } from '@/lib/i18n/dictionaries'
 import type { Locale } from '@/lib/i18n/locales'
 
@@ -48,12 +48,12 @@ export default function TopbarWeekNav({ dict, locale }: { dict: Dictionary; loca
   if (!WEEK_AWARE_PATHS.includes(pathname)) return null
 
   const weekParam = searchParams.get('week')
-  const weekStart = weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? parseISODate(weekParam) : nextWeekStart()
+  const weekStart = weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? parseISODate(weekParam) : currentWeekStart()
   const weekStartDate = toISODate(weekStart)
   const prevWeek = toISODate(addWeeks(weekStart, -1))
   const nextWeek = toISODate(addWeeks(weekStart, 1))
 
-  // The window starts from whichever is earlier — the real "next week" or
+  // The window starts from whichever is earlier — the real current week or
   // the week currently being viewed — and always extends at least
   // WEEKS_AHEAD_IN_PICKER weeks past the viewed week specifically, not just
   // a fixed 12 weeks from today. Same fix as CopyToWeekForm's window: a flat
@@ -62,7 +62,7 @@ export default function TopbarWeekNav({ dict, locale }: { dict: Dictionary; loca
   // the manager has actually navigated to (the old code only patched over
   // this by tacking the viewed week on by itself, which masked the gap
   // instead of closing it).
-  const soonestWeekStart = nextWeekStart()
+  const soonestWeekStart = currentWeekStart()
   const weekOptionsWindowStart = weekStart < soonestWeekStart ? weekStart : soonestWeekStart
   const weeksFromWindowStartToViewed = Math.round(
     (weekStart.getTime() - weekOptionsWindowStart.getTime()) / (7 * 24 * 60 * 60 * 1000)

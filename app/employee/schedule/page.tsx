@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentEmployee } from '@/lib/dal'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import { addDays, formatDayLabel, nextWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
+import { addDays, currentWeekStart, formatDayLabel, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
 
 type ShiftRow = {
   id: string
@@ -32,7 +32,7 @@ export default async function EmployeeSchedulePage({
   const dict = getDictionary(locale)
 
   const { week } = await searchParams
-  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : nextWeekStart()
+  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : currentWeekStart()
   const weekStartDate = toISODate(weekStart)
 
   const supabase = await createClient()

@@ -5,8 +5,8 @@ import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import {
   addDays,
+  currentWeekStart,
   formatDayLabel,
-  nextWeekStart,
   parseISODate,
   toISODate,
   WEEK_DISPLAY_ORDER,
@@ -29,7 +29,7 @@ export default async function AvailabilityPage({
   const dict = getDictionary(locale)
 
   const { week } = await searchParams
-  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : nextWeekStart()
+  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : currentWeekStart()
   const weekStartDate = toISODate(weekStart)
 
   const supabase = await createClient()

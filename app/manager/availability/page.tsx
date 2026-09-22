@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { getDictionary } from '@/lib/i18n/dictionaries'
-import { addDays, nextWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
+import { addDays, currentWeekStart, parseISODate, toISODate, WEEK_DISPLAY_ORDER } from '@/lib/weeks'
 import { getAvailabilityStatus, type AvailabilityStatus } from '@/lib/availabilityStatus'
 import WeekDayHeaderCell from '@/app/components/WeekDayHeaderCell'
 
@@ -30,7 +30,7 @@ export default async function ManagerAvailabilityPage({
   const dict = getDictionary(locale)
 
   const { week } = await searchParams
-  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : nextWeekStart()
+  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : currentWeekStart()
   const weekStartDate = toISODate(weekStart)
 
   const supabase = await createClient()

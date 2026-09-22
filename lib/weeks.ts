@@ -45,8 +45,8 @@ export function parseISODate(value: string): Date {
   return new Date(year, month - 1, day)
 }
 
-export function nextWeekStart(): Date {
-  return addWeeks(startOfWeek(new Date()), 1)
+export function currentWeekStart(): Date {
+  return startOfWeek(new Date())
 }
 
 export function formatDayLabel(date: Date, locale: Locale): string {

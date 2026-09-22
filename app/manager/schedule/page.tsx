@@ -6,9 +6,9 @@ import { getDictionary } from '@/lib/i18n/dictionaries'
 import {
   addDays,
   addWeeks,
+  currentWeekStart,
   formatDayLabel,
   formatWeekRangeLabel,
-  nextWeekStart,
   parseISODate,
   toISODate,
   WEEK_DISPLAY_ORDER,
@@ -181,7 +181,7 @@ export default async function ManagerSchedulePage({
   const dict = getDictionary(locale)
 
   const { week } = await searchParams
-  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : nextWeekStart()
+  const weekStart = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? parseISODate(week) : currentWeekStart()
   const weekStartDate = toISODate(weekStart)
 
   const supabase = await createClient()
@@ -328,8 +328,8 @@ export default async function ManagerSchedulePage({
       (functionOrderById.get(b) ?? Number.MAX_SAFE_INTEGER)
   )
 
-  // The picker window starts from whichever is earlier — the real "next
-  // week" or the week currently being viewed — so a manager who's
+  // The picker window starts from whichever is earlier — the real current
+  // week or the week currently being viewed — so a manager who's
   // navigated into the past never loses early options. But anchoring the
   // *start* isn't enough on its own: if the viewed week is far ahead of
   // "today", a fixed-length window counted from that start mostly gets
@@ -338,7 +338,8 @@ export default async function ManagerSchedulePage({
   // instead of fixed — it always includes at least WEEKS_AHEAD_IN_PICKER
   // weeks past whichever week is actually being viewed right now,
   // regardless of how far that is from real-world "today".
-  const weekOptionsWindowStart = weekStart < nextWeekStart() ? weekStart : nextWeekStart()
+  const soonestWeekStart = currentWeekStart()
+  const weekOptionsWindowStart = weekStart < soonestWeekStart ? weekStart : soonestWeekStart
   const weeksFromWindowStartToViewed = Math.round(
     (weekStart.getTime() - weekOptionsWindowStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
   )
