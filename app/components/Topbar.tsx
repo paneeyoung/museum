@@ -282,77 +282,91 @@ export default function Topbar({
 
   return (
     <header className="border-b border-gray-200 bg-white print:hidden">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2">
-        <Link href={homeHref} className="flex shrink-0 items-center">
-          <Image
-            src="/logo/logo-full.png"
-            alt="Logo"
-            width={300}
-            height={35}
-            className="hidden h-6 w-auto md:block"
-          />
-          <Image
-            src="/logo/logo-icon.png"
-            alt="Logo"
-            width={150}
-            height={150}
-            className="h-8 w-8 md:hidden"
-          />
-        </Link>
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-2">
+        {/* Logo + nav anchored together at the left, everything else pushed
+            to the far right via ml-auto below — nav's position is then a
+            fixed offset from the logo, not dependent on how wide the
+            right-hand cluster happens to be on a given page. A plain
+            justify-between across all these items (the previous approach)
+            made the nav's horizontal position drift per-page: e.g.
+            TopbarWeekNav renders null outright on non-week-aware pages, and
+            TopbarStatusSlot's content is conditional too (the "Published"
+            badge), so the nav visibly shifted depending on which of those
+            happened to be present. */}
+        <div className="flex items-center gap-6">
+          <Link href={homeHref} className="flex shrink-0 items-center">
+            <Image
+              src="/logo/logo-full.png"
+              alt="Logo"
+              width={300}
+              height={35}
+              className="hidden h-6 w-auto md:block"
+            />
+            <Image
+              src="/logo/logo-icon.png"
+              alt="Logo"
+              width={150}
+              height={150}
+              className="h-8 w-8 md:hidden"
+            />
+          </Link>
 
-        <nav className="hidden flex-wrap items-center gap-1 md:flex">
-          {isManager ? (
-            <>
-              <Link
-                href="/manager/schedule"
-                className={pathname.startsWith('/manager/schedule') ? activeLinkClass : linkClass}
-              >
-                {dict.manager.scheduleEditorTitle}
-              </Link>
-              <AvailabilityMenu dict={dict} />
-              <Link
-                href="/employee/schedule"
-                className={pathname.startsWith('/employee/schedule') ? activeLinkClass : linkClass}
-              >
-                {dict.availability.myScheduleLink}
-              </Link>
-              <ManageMenu dict={dict} />
-            </>
-          ) : (
-            <>
-              <Link
-                href="/employee/availability"
-                className={pathname.startsWith('/employee/availability') ? activeLinkClass : linkClass}
-              >
-                {dict.availability.navLabel}
-              </Link>
-              <Link
-                href="/employee/schedule"
-                className={pathname.startsWith('/employee/schedule') ? activeLinkClass : linkClass}
-              >
-                {dict.availability.myScheduleLink}
-              </Link>
-            </>
-          )}
-        </nav>
+          <nav className="hidden flex-wrap items-center gap-1 md:flex">
+            {isManager ? (
+              <>
+                <Link
+                  href="/manager/schedule"
+                  className={pathname.startsWith('/manager/schedule') ? activeLinkClass : linkClass}
+                >
+                  {dict.manager.scheduleEditorTitle}
+                </Link>
+                <AvailabilityMenu dict={dict} />
+                <Link
+                  href="/employee/schedule"
+                  className={pathname.startsWith('/employee/schedule') ? activeLinkClass : linkClass}
+                >
+                  {dict.availability.myScheduleLink}
+                </Link>
+                <ManageMenu dict={dict} />
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/employee/availability"
+                  className={pathname.startsWith('/employee/availability') ? activeLinkClass : linkClass}
+                >
+                  {dict.availability.navLabel}
+                </Link>
+                <Link
+                  href="/employee/schedule"
+                  className={pathname.startsWith('/employee/schedule') ? activeLinkClass : linkClass}
+                >
+                  {dict.availability.myScheduleLink}
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setIsMobileMenuOpen((v) => !v)}
-          aria-expanded={isMobileMenuOpen}
-          aria-label={dict.manager.userMenuLabel}
-          className="flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 md:hidden"
-        >
-          {isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
-        </button>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((v) => !v)}
+            aria-expanded={isMobileMenuOpen}
+            aria-label={dict.manager.userMenuLabel}
+            className="flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 md:hidden"
+          >
+            {isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+          </button>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Suspense fallback={null}>
-            <TopbarWeekNav dict={dict} locale={locale} />
-          </Suspense>
-          <TopbarStatusSlot />
-          <div className="hidden items-center gap-1 md:flex">
-            <LanguageToggle locale={locale} label={dict.languageSwitcher.label} />
+          <div className="flex flex-wrap items-center gap-3">
+            <Suspense fallback={null}>
+              <TopbarWeekNav dict={dict} locale={locale} />
+            </Suspense>
+            <TopbarStatusSlot />
+            <div className="hidden items-center gap-1 md:flex">
+              <LanguageToggle locale={locale} label={dict.languageSwitcher.label} />
+            </div>
           </div>
         </div>
       </div>
