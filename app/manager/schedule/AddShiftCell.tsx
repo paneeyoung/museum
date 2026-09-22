@@ -20,7 +20,6 @@ export default function AddShiftCell({
   shiftName,
   defaultStartTime,
   defaultEndTime,
-  defaultCapacity,
   dict,
 }: {
   weekStartDate: string
@@ -30,7 +29,6 @@ export default function AddShiftCell({
   shiftName: string
   defaultStartTime: string
   defaultEndTime: string
-  defaultCapacity: number
   dict: Dictionary
 }) {
   const [open, setOpen] = useState(false)
@@ -64,6 +62,9 @@ export default function AddShiftCell({
             <input type="hidden" name="weekStartDate" value={weekStartDate} />
             <input type="hidden" name="dayOfWeek" value={dayOfWeek} />
             <input type="hidden" name="functionId" value={functionId} />
+            {/* Every existing shift is capacity 1 — see AddShiftForm's same
+                hidden field for why there's no UI for it. */}
+            <input type="hidden" name="capacity" value={1} />
 
             <p className="text-left text-sm font-medium text-gray-900">{dayLabel}</p>
 
@@ -86,18 +87,6 @@ export default function AddShiftCell({
                 defaultValue={shiftName}
                 required
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-500">{dict.shifts.capacityLabel}</label>
-              <input
-                type="number"
-                name="capacity"
-                min={1}
-                defaultValue={defaultCapacity}
-                required
-                className="w-20 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
               />
             </div>
 

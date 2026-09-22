@@ -11,7 +11,6 @@ export default function ShiftCellHeader({
   shiftName,
   startTime,
   endTime,
-  capacity,
   dayLabel,
   dict,
 }: {
@@ -19,7 +18,6 @@ export default function ShiftCellHeader({
   shiftName: string
   startTime: string
   endTime: string
-  capacity: number
   // The edit form opens as an overlay detached from its cell, so it has to
   // say which day it belongs to on its own.
   dayLabel: string
@@ -29,7 +27,6 @@ export default function ShiftCellHeader({
   const [name, setName] = useState(shiftName)
   const [start, setStart] = useState(startTime.slice(0, 5))
   const [end, setEnd] = useState(endTime.slice(0, 5))
-  const [cap, setCap] = useState(String(capacity))
   const [isPending, startTransition] = useTransition()
   const { showToast } = useToast()
 
@@ -58,7 +55,6 @@ export default function ShiftCellHeader({
     setName(shiftName)
     setStart(startTime.slice(0, 5))
     setEnd(endTime.slice(0, 5))
-    setCap(String(capacity))
     setIsEditing(false)
   }
 
@@ -70,11 +66,6 @@ export default function ShiftCellHeader({
     }
     if (start >= end) {
       window.alert(dict.shifts.errorStartBeforeEnd)
-      return
-    }
-    const capNumber = Number(cap)
-    if (!Number.isInteger(capNumber) || capNumber < 1) {
-      window.alert(dict.shifts.errorGeneric)
       return
     }
 
@@ -91,7 +82,9 @@ export default function ShiftCellHeader({
         shiftName: trimmedName,
         startTime: start,
         endTime: end,
-        capacity: capNumber,
+        // Every existing shift is capacity 1 — see AddShiftForm's hidden
+        // field for why there's no UI for it here either.
+        capacity: 1,
       })
       if (result.status === 'error') {
         window.alert(dict.shifts.errorGeneric)
@@ -172,17 +165,6 @@ export default function ShiftCellHeader({
                 <label className="text-xs text-gray-500">{dict.shifts.endLabel}</label>
                 <TimeSelect value={end} onChange={setEnd} />
               </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-500">{dict.shifts.capacityLabel}</label>
-              <input
-                type="number"
-                min={1}
-                value={cap}
-                onChange={(e) => setCap(e.target.value)}
-                className="w-20 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-              />
             </div>
 
             <div className="flex items-center gap-3 pt-1">

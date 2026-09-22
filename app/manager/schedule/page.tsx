@@ -509,7 +509,6 @@ export default async function ManagerSchedulePage({
                                         shiftName={group.shiftName}
                                         defaultStartTime={sampleShift.start_time}
                                         defaultEndTime={sampleShift.end_time}
-                                        defaultCapacity={sampleShift.capacity}
                                         dict={dict}
                                       />
                                     ) : (
@@ -542,7 +541,6 @@ export default async function ManagerSchedulePage({
                                       shiftName={shift.shift_name}
                                       startTime={shift.start_time}
                                       endTime={shift.end_time}
-                                      capacity={shift.capacity}
                                       dayLabel={`${dict.common.dayNames[dayOfWeek]} · ${formatDayLabel(addDays(weekStart, dayIndex), locale)}`}
                                       dict={dict}
                                     />
